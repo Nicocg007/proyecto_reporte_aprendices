@@ -9,7 +9,7 @@ INSERT INTO `roles` (`id_rol`, `nombre`) VALUES
 -- 2. Insertar Usuarios de Prueba
 -- Nota: La contraseña para todos en esta prueba inicial es '123456' 
 -- (En producción se deben encriptar con password_hash de PHP)
-INSERT INTO `usuario` (`numero_documento`, `nombre`, `apellido`, `correo`, `password`, `rfid_uid`, `id_rol`, `estado`) VALUES
+INSERT INTO `usuario` (`numero_documento`, `nombre`, `apellido`, `correo`, `contraseña`, `rfid_uid`, `id_rol`, `estado`) VALUES
 ('1000000001', 'Admin', 'SENA', 'admin@sena.edu.co', '123456', NULL, 1, 'Activo'),
 ('1000000002', 'Juan Camilo', 'Vanegas González', 'jvanegas@sena.edu.co', '123456', NULL, 2, 'Activo'),
 ('1000000003', 'Carlos', 'Pérez', 'cperez@gmail.com', '123456', 'RFID-A1B2C3D4', 3, 'Activo'),
