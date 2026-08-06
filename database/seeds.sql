@@ -1,4 +1,4 @@
-USE `sena_asistencia`;
+USE `schema`;
 
 -- 1. Insertar Roles del sistema
 INSERT INTO `roles` (`id_rol`, `nombre`) VALUES
