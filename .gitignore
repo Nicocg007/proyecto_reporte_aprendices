@@ -1,0 +1,12 @@
+# Configuración local y credenciales
+config/database.php
+.env
+
+# Archivos temporales o subidos por usuarios
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Logs y editores
+*.log
+.vscode/
+.idea/
