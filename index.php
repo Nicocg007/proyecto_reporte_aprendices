@@ -1,3 +1,5 @@
+<!--
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -39,3 +41,10 @@
     
 </body>
 </html>
+
+-->
+
+<?php
+// Redireccionar a la pantalla de Login
+header('Location: views/login.php');
+exit;
