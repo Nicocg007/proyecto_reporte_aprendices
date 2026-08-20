@@ -3,7 +3,7 @@
         <button id="sidebarToggle" class="sidebar-toggle-btn lg:hidden">
             <i data-lucide="menu" class="w-6 h-6"></i>
         </button>
-        <h1 class="navbar-title" id="pageTitle">Dashboard</h1>
+        <h1 class="navbar-title" id="pageTitle">Mi Panel</h1>
     </div>
 
     <div class="navbar-right">
@@ -14,7 +14,7 @@
 
         <button class="navbar-icon-btn" id="notificationsBtn">
             <i data-lucide="bell" class="w-5 h-5"></i>
-            <span class="navbar-badge">3</span>
+            <span class="navbar-badge">1</span>
         </button>
 
         <div class="navbar-divider"></div>
@@ -24,8 +24,8 @@
                 <i data-lucide="user" class="w-4 h-4"></i>
             </div>
             <div class="navbar-user-info">
-                <span class="navbar-user-name">Admin SENA</span>
-                <span class="navbar-user-role">Administrador</span>
+                <span class="navbar-user-name">Carlos Perez</span>
+                <span class="navbar-user-role">Aprendiz</span>
             </div>
             <i data-lucide="chevron-down" class="w-4 h-4 navbar-user-arrow"></i>
         </div>
