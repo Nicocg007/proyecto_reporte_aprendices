@@ -107,7 +107,7 @@
                     </div>
 
                     
-                    <button type="submit" class="btn btn-login w-full h-12 rounded-xl text-white font-semibold text-base border-none">
+                    <button type="submit" onclick="window.location.href='../views/admin_dashboard.php';" class="btn btn-login w-full h-12 rounded-xl text-white font-semibold text-base border-none">
                         <i data-lucide="log-in" class="w-5 h-5 mr-2"></i>
                         Iniciar Sesion
                     </button>
