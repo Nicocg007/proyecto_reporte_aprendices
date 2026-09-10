@@ -96,7 +96,7 @@
                 </div>
                 <div class="card-body">
                     <div class="quick-actions">
-                        <a href="#" class="quick-action-btn">
+                        <a href="admin_aprendices.php" class="quick-action-btn">
                             <div class="quick-action-icon">
                                 <i data-lucide="user-plus" class="w-5 h-5"></i>
                             </div>
@@ -106,7 +106,7 @@
                             </div>
                         </a>
 
-                        <a href="#" class="quick-action-btn">
+                        <a href="admin_fichas.php" class="quick-action-btn">
                             <div class="quick-action-icon">
                                 <i data-lucide="folder-plus" class="w-5 h-5"></i>
                             </div>
@@ -126,7 +126,7 @@
                             </div>
                         </a>
 
-                        <a href="#" class="quick-action-btn">
+                        <a href="admin_aprendices.php" class="quick-action-btn">
                             <div class="quick-action-icon">
                                 <i data-lucide="scan-line" class="w-5 h-5"></i>
                             </div>
