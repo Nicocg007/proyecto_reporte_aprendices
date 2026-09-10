@@ -16,19 +16,19 @@
     </div>
 
     <nav class="sidebar-nav">
-        <a href="aprendiz_dashboard.php" class="sidebar-link active">
+        <a href="aprendiz_dashboard.php" class="sidebar-link">
             <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
             <span>Mi Panel</span>
         </a>
-        <a href="#" class="sidebar-link">
+        <a href="aprendiz_historial.php" class="sidebar-link">
             <i data-lucide="calendar" class="w-5 h-5"></i>
             <span>Mi Historial</span>
         </a>
-        <a href="#" class="sidebar-link">
+        <a href="aprendiz_excusas.php" class="sidebar-link">
             <i data-lucide="file-plus" class="w-5 h-5"></i>
             <span>Enviar Excusa</span>
         </a>
-        <a href="#" class="sidebar-link">
+        <a href="aprendiz_ficha.php" class="sidebar-link">
             <i data-lucide="book-open" class="w-5 h-5"></i>
             <span>Mi Ficha</span>
         </a>
