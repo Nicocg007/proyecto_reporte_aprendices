@@ -19,15 +19,33 @@
 
         <div class="navbar-divider"></div>
 
-        <div class="navbar-user" id="userMenu">
-            <div class="navbar-avatar">
-                <i data-lucide="user" class="w-4 h-4"></i>
+        <div class="user-menu">
+            <div class="navbar-user" id="userMenuBtn">
+                <div class="navbar-avatar">
+                    <i data-lucide="user" class="w-4 h-4"></i>
+                </div>
+                <div class="navbar-user-info">
+                    <span class="navbar-user-name">Admin SENA</span>
+                    <span class="navbar-user-role">Administrador</span>
+                </div>
+                <i data-lucide="chevron-down" id="userMenuArrow" class="w-4 h-4 navbar-user-arrow"></i>
             </div>
-            <div class="navbar-user-info">
-                <span class="navbar-user-name">Admin SENA</span>
-                <span class="navbar-user-role">Administrador</span>
+
+            <div class="user-dropdown" id="userDropdown">
+                <div class="dropdown-header">
+                    <span class="dropdown-name">Admin SENA</span>
+                    <span class="dropdown-role">Administrador</span>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="#" class="dropdown-item">
+                    <i data-lucide="user-cog" class="w-4 h-4"></i>
+                    Editar Perfil
+                </a>
+                <a href="../../logout.php" class="dropdown-item dropdown-item-danger">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    Cerrar Sesion
+                </a>
             </div>
-            <i data-lucide="chevron-down" class="w-4 h-4 navbar-user-arrow"></i>
         </div>
 
         <a href="../../logout.php" class="navbar-logout-btn" title="Cerrar sesion">

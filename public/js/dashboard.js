@@ -6,8 +6,42 @@ document.addEventListener('DOMContentLoaded', function() {
     lucide.createIcons();
     initSidebar();
     initNotifications();
+    initUserMenu();
     checkUrlParams();
 });
+
+function initUserMenu() {
+    const btn = document.getElementById('userMenuBtn');
+    const dropdown = document.getElementById('userDropdown');
+    const arrow = document.getElementById('userMenuArrow');
+
+    if (!btn || !dropdown) return;
+
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+
+        if (arrow) {
+            if (dropdown.classList.contains('open')) {
+                arrow.setAttribute('data-lucide', 'chevron-up');
+            } else {
+                arrow.setAttribute('data-lucide', 'chevron-down');
+            }
+            lucide.createIcons();
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.user-menu')) {
+            dropdown.classList.remove('open');
+
+            if (arrow) {
+                arrow.setAttribute('data-lucide', 'chevron-down');
+                lucide.createIcons();
+            }
+        }
+    });
+}
 
 function initSidebar() {
     const toggle = document.getElementById('sidebarToggle');
