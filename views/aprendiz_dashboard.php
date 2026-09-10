@@ -95,7 +95,7 @@
                 </div>
                 <div class="card-body">
                     <div class="quick-actions">
-                        <a href="#" class="quick-action-btn">
+                        <a href="aprendiz_excusas.php" class="quick-action-btn">
                             <div class="quick-action-icon">
                                 <i data-lucide="file-plus" class="w-5 h-5"></i>
                             </div>
@@ -105,17 +105,17 @@
                             </div>
                         </a>
 
-                        <a href="#" class="quick-action-btn">
+                        <a href="aprendiz_historial.php" class="quick-action-btn">
                             <div class="quick-action-icon">
                                 <i data-lucide="calendar" class="w-5 h-5"></i>
                             </div>
                             <div class="quick-action-text">
-                                <span class="quick-action-title">Ver Calendario</span>
-                                <span class="quick-action-desc">Calendario de asistencias</span>
+                                <span class="quick-action-title">Ver Historial</span>
+                                <span class="quick-action-desc">Tu historial de asistencia</span>
                             </div>
                         </a>
 
-                        <a href="#" class="quick-action-btn">
+                        <a href="aprendiz_ficha.php" class="quick-action-btn">
                             <div class="quick-action-icon">
                                 <i data-lucide="info" class="w-5 h-5"></i>
                             </div>
