@@ -20,15 +20,15 @@
             <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
             <span>Dashboard</span>
         </a>
-        <a href="#" class="sidebar-link">
+        <a href="instructor_fichas.php" class="sidebar-link">
             <i data-lucide="book-open" class="w-5 h-5"></i>
             <span>Mis Fichas</span>
         </a>
-        <a href="#" class="sidebar-link">
+        <a href="instructor_asistencia.php" class="sidebar-link">
             <i data-lucide="clipboard-check" class="w-5 h-5"></i>
             <span>Asistencia</span>
         </a>
-        <a href="#" class="sidebar-link">
+        <a href="instructor_excusas.php" class="sidebar-link">
             <i data-lucide="file-check" class="w-5 h-5"></i>
             <span>Revisar Excusas</span>
         </a>
