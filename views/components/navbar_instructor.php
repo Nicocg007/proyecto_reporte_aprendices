@@ -41,7 +41,7 @@
                     <i data-lucide="user-cog" class="w-4 h-4"></i>
                     Editar Perfil
                 </a>
-                <a href="../../logout.php" class="dropdown-item dropdown-item-danger">
+                <a href="../logout.php" class="dropdown-item dropdown-item-danger">
                     <i data-lucide="log-out" class="w-4 h-4"></i>
                     Cerrar Sesion
                 </a>
