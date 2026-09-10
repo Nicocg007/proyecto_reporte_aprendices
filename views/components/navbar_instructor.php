@@ -14,7 +14,7 @@
 
         <button class="navbar-icon-btn" id="notificationsBtn">
             <i data-lucide="bell" class="w-5 h-5"></i>
-            <span class="navbar-badge">3</span>
+            <span class="navbar-badge">2</span>
         </button>
 
         <div class="navbar-divider"></div>
@@ -24,8 +24,8 @@
                 <i data-lucide="user" class="w-4 h-4"></i>
             </div>
             <div class="navbar-user-info">
-                <span class="navbar-user-name">Admin SENA</span>
-                <span class="navbar-user-role">Administrador</span>
+                <span class="navbar-user-name">Juan Vanegas</span>
+                <span class="navbar-user-role">Instructor</span>
             </div>
             <i data-lucide="chevron-down" class="w-4 h-4 navbar-user-arrow"></i>
         </div>
