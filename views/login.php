@@ -44,13 +44,7 @@
             <!-- Logo y titulo -->
             <div class="text-center mb-8">
                 <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white shadow-lg mb-4 logo-sena">
-                    <svg class="w-12 h-12" viewBox="0 0 100 100" fill="none">
-                        <rect x="10" y="20" width="80" height="60" rx="8" fill="#0d9488"/>
-                        <rect x="20" y="30" width="25" height="20" rx="4" fill="#fff"/>
-                        <rect x="55" y="30" width="25" height="20" rx="4" fill="#fff"/>
-                        <rect x="20" y="58" width="60" height="12" rx="4" fill="#fff"/>
-                        <circle cx="70" cy="40" r="5" fill="#fbbf24"/>
-                    </svg>
+                    <img src="../public/img/logo_sena.jpg" alt="Logo SENA" class="login-logo-img">
                 </div>
                 <h1 class="text-3xl font-bold text-white mb-2">SENA Control</h1>
                 <p class="text-teal-200 font-light">Sistema de Control de Asistencia</p>

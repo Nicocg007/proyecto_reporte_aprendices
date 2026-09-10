@@ -40,6 +40,14 @@ body {
 /* --- Logo animado --- */
 .logo-sena {
     animation: float 3s ease-in-out infinite;
+    overflow: hidden;
+}
+
+.login-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
 }
 
 @keyframes float {

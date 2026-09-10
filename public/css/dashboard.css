@@ -36,6 +36,14 @@ body {
     gap: 12px;
 }
 
+.sidebar-logo-img {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #fff;
+}
+
 .sidebar-title {
     font-size: 18px;
     font-weight: 700;
