@@ -30,7 +30,7 @@
             <i data-lucide="chevron-down" class="w-4 h-4 navbar-user-arrow"></i>
         </div>
 
-        <a href="../logout.php" class="navbar-logout-btn" title="Cerrar sesion">
+        <a href="../login.php" class="navbar-logout-btn" title="Cerrar sesion">
             <i data-lucide="log-out" class="w-5 h-5"></i>
         </a>
     </div>
