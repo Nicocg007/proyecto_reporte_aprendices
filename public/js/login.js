@@ -25,10 +25,17 @@ function togglePassword() {
 document.getElementById('loginForm').addEventListener('submit', function(e) {
     const documento = document.getElementById('documento').value.trim();
     const password = document.getElementById('password').value.trim();
+    const rol = document.getElementById('rol').value;
 
     if (!documento || !password) {
         e.preventDefault();
         SenaToast.warning('Campos vacios', 'Por favor completa todos los campos');
+        return;
+    }
+
+    if (!rol) {
+        e.preventDefault();
+        SenaToast.warning('Rol requerido', 'Selecciona tu rol para continuar');
         return;
     }
 
@@ -38,21 +45,24 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
         return;
     }
 
-    // Prevenir envio real (solo diseno)
     e.preventDefault();
 
-    // Animacion del boton al enviar
     const btn = this.querySelector('button[type="submit"]');
     btn.disabled = true;
     btn.innerHTML = '<span class="loading loading-spinner loading-sm"></span> Verificando...';
 
-    // Mostrar toast de exito despues de 1.5 segundos
+    const rutas = {
+        'admin': '../views/admin_dashboard.php',
+        'instructor': '../views/instructor_dashboard.php',
+        'aprendiz': '../views/aprendiz_dashboard.php'
+    };
+
     setTimeout(() => {
         SenaToast.success('Bienvenido!', 'Has iniciado sesion exitosamente');
-        btn.disabled = false;
-        btn.innerHTML = '<i data-lucide="log-in" class="w-5 h-5 mr-2"></i> Iniciar Sesion';
-        lucide.createIcons();
-    }, 1500);
+        setTimeout(() => {
+            window.location.href = rutas[rol];
+        }, 800);
+    }, 1000);
 });
 
 // Mostrar mensajes por URL
