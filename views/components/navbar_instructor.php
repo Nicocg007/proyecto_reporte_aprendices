@@ -37,7 +37,7 @@
                     <span class="dropdown-role">Instructor</span>
                 </div>
                 <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item">
+                <a href="editar_perfil.php?rol=instructor" class="dropdown-item">
                     <i data-lucide="user-cog" class="w-4 h-4"></i>
                     Editar Perfil
                 </a>
