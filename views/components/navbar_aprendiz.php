@@ -47,9 +47,4 @@
                 </a>
             </div>
         </div>
-
-        <a href="../../logout.php" class="navbar-logout-btn" title="Cerrar sesion">
-            <i data-lucide="log-out" class="w-5 h-5"></i>
-        </a>
-    </div>
 </header>
