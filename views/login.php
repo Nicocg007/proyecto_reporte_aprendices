@@ -99,6 +99,17 @@
                     </div>
 
                     
+                    <div class="input-group">
+                        <i data-lucide="shield" class="icon-input w-5 h-5"></i>
+                        <select name="rol" id="rol" class="input input-bordered w-full h-12 rounded-xl input-focus transition-all duration-200" required>
+                            <option value="">Selecciona tu rol</option>
+                            <option value="admin">Administrador</option>
+                            <option value="instructor">Instructor</option>
+                            <option value="aprendiz">Aprendiz</option>
+                        </select>
+                    </div>
+
+                    
                     <div class="flex items-center justify-between text-sm">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" class="checkbox checkbox-sm checkbox-success" name="recordar">
@@ -107,7 +118,7 @@
                     </div>
 
                     
-                    <button type="submit" onclick="window.location.href='../views/admin_dashboard.php';" class="btn btn-login w-full h-12 rounded-xl text-white font-semibold text-base border-none">
+                    <button type="submit" id="btnLogin" class="btn btn-login w-full h-12 rounded-xl text-white font-semibold text-base border-none">
                         <i data-lucide="log-in" class="w-5 h-5 mr-2"></i>
                         Iniciar Sesion
                     </button>
