@@ -10,7 +10,7 @@ function requiereLogin(){
     // si no existe id_usuario en la sesion = no esta logueado
     if(!isset($_SESSION['id_usuario'])) {
         // lo redirige al login para que se autentifique
-        header('Location: views/login.php');
+        header('Location: login.php');
         exit(); // corto la ejecucion
     }
 }
@@ -22,7 +22,7 @@ function requiereRol($rol_requerido){
     // si el rol de la sesion no coincide con lo requerido
     if($_SESSION['rol'] !== $rol_requerido){
         // lo saco al login
-        header('Location: views/login.php');
+        header('Location: login.php');
         exit();
     }
 }
