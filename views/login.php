@@ -109,6 +109,9 @@
                             <input type="checkbox" class="checkbox checkbox-sm checkbox-success" name="recordar">
                             <span class="text-slate-600">Recordarme</span>
                         </label>
+                        <a href="olvidar_contrasena.php" class="text-teal-600 hover:text-teal-700 font-medium">
+                            ¿Olvidaste tu contraseña?
+                        </a>
                     </div>
 
                     

@@ -50,10 +50,17 @@ function mostrarMensajes() {
     const error = urlParams.get('error');
     const success = urlParams.get('success');
     const logout = urlParams.get('logout');
+    const reset = urlParams.get('reset');
 
     // Toast de cerrar sesion
     if (logout === '1') {
         SenaToast.info('Sesion cerrada', 'Has cerrado sesion exitosamente');
+        return;
+    }
+
+    // Toast de contrasena restablecida
+    if (reset === '1') {
+        SenaToast.success('Contraseña cambiada', 'Inicia sesion con tu nueva contrasena');
         return;
     }
 
