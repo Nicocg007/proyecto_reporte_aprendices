@@ -2,6 +2,46 @@
 require_once '../model/auth_helper.php';
 requiereLogin();
 requiereRol('Aprendiz');
+
+// conexion a la base de datos
+require_once '../config/database.php';
+$db = new Database();
+$conn = $db->getConnection();
+
+// id del aprendiz logueado de la sesion
+$id = $_SESSION['id_usuario'];
+
+// dias asistidos dias que marco ingreso, normal o con retardo
+$stmt = $conn->query("SELECT COUNT(*) AS total FROM ingreso
+    WHERE id_aprendiz = $id AND estado_asistencia IN ('Normal','Retardo','Salida Temprana')");
+$dias_asistidos = $stmt->fetch()['total'];
+
+// total de retardos
+$stmt = $conn->query("SELECT COUNT(*) AS total FROM ingreso WHERE id_aprendiz = $id AND estado_asistencia = 'Retardo'");
+$total_retardos = $stmt->fetch()['total'];
+
+// total de inasistencias
+$stmt = $conn->query("SELECT COUNT(*) AS total FROM ingreso WHERE id_aprendiz = $id AND estado_asistencia = 'Inasistencia'");
+$total_inasistencias = $stmt->fetch()['total'];
+
+// excusas pendientes mias
+$stmt = $conn->query("SELECT COUNT(*) AS total FROM excusa WHERE id_aprendiz = $id AND estado = 'Pendiente'");
+$excusas_pendientes = $stmt->fetch()['total'];
+
+// mi historial de asistencia
+$stmt = $conn->query("SELECT fecha, hora_entrada_registrada AS entrada, hora_salida_registrada AS salida, estado_asistencia AS estado
+    FROM ingreso
+    WHERE id_aprendiz = $id
+    ORDER BY fecha DESC, hora_entrada_registrada DESC
+    LIMIT 10");
+$mi_historial = $stmt->fetchAll();
+
+// mis excusas enviadas
+$stmt = $conn->query("SELECT fecha_inasistencia AS fecha, observacion AS motivo, estado, fecha_revision
+    FROM excusa
+    WHERE id_aprendiz = $id
+    ORDER BY fecha_inasistencia DESC");
+$mis_excusas = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="es">
