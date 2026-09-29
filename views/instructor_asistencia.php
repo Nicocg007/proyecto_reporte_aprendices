@@ -2,6 +2,43 @@
 require_once '../model/auth_helper.php';
 requiereLogin();
 requiereRol('Instructor');
+
+// conexion a la base de datos
+require_once '../config/database.php';
+$db = new Database();
+$conn = $db->getConnection();
+
+// id del instructor logueado
+$id = $_SESSION['id_usuario'];
+
+// fichas del instructor para el selector
+$stmt = $conn->query("SELECT id_ficha, codigo_ficha FROM ficha WHERE id_instructor_encargado = $id ORDER BY codigo_ficha");
+$lista_fichas = $stmt->fetchAll();
+
+// filtros del formulario
+$ficha_filtro = $_POST['ficha'] ?? '';
+$fecha_filtro = $_POST['fecha'] ?? '';
+
+// asistencias registradas con filtros opcionales
+$sql = "SELECT CONCAT(u.nombre, ' ', u.apellido) AS nombre, f.codigo_ficha AS ficha, i.fecha,
+    i.hora_entrada_registrada AS entrada, i.hora_salida_registrada AS salida, i.estado_asistencia AS estado
+    FROM ingreso i
+    INNER JOIN usuario u ON u.id_usuario = i.id_aprendiz
+    INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = u.id_usuario
+    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
+    WHERE f.id_instructor_encargado = $id";
+
+// filtro por ficha
+if ($ficha_filtro != '') {
+    $sql .= " AND uf.id_ficha = $ficha_filtro";
+}
+// filtro por fecha
+if ($fecha_filtro != '') {
+    $sql .= " AND i.fecha = '$fecha_filtro'";
+}
+$sql .= " ORDER BY i.fecha DESC, i.hora_entrada_registrada DESC";
+$stmt = $conn->query($sql);
+$asistencia_registrada = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="es">
