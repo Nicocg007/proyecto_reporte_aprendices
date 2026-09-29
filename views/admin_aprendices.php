@@ -40,7 +40,7 @@ if (isset($_POST['documento'])) {
     }
 
     // redirigir a la misma pagina con mensaje de exito
-    header('Location: admin_aprendices.php?success=1');
+    header('Location: admin_aprendices.php?agregado=1');
     exit();
 }
 
@@ -228,9 +228,9 @@ $lista_aprendices = $stmt->fetchAll();
     <?php include 'components/footer.php'; ?>
 
     <script>
-    // mostrar mensaje de exito si trae ?success=1 en la url
+    // mostrar mensaje de exito si trae ?agregado=1 en la url
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('success') === '1') {
+    if (urlParams.get('agregado') === '1') {
         SenaToast.success('Listo', 'Aprendiz agregado correctamente');
     }
     </script>
