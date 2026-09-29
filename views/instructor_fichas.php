@@ -2,6 +2,24 @@
 require_once '../model/auth_helper.php';
 requiereLogin();
 requiereRol('Instructor');
+
+// conexion a la base de datos
+require_once '../config/database.php';
+$db = new Database();
+$conn = $db->getConnection();
+
+// id del instructor logueado
+$id = $_SESSION['id_usuario'];
+
+// fichas que dirige el instructor con su cantidad de aprendices
+$stmt = $conn->query("SELECT f.codigo_ficha, f.nombre_programa, f.hora_entrada, f.hora_salida,
+    COUNT(uf.id_aprendiz) AS total_aprendices
+    FROM ficha f
+    LEFT JOIN usuario_has_ficha uf ON uf.id_ficha = f.id_ficha
+    WHERE f.id_instructor_encargado = $id
+    GROUP BY f.id_ficha
+    ORDER BY f.codigo_ficha");
+$mis_fichas = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="es">
