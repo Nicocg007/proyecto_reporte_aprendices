@@ -1,6 +1,55 @@
 <?php
 require_once '../model/auth_helper.php';
 requiereLogin();
+
+// conexion a la base de datos
+require_once '../config/database.php';
+$db = new Database();
+$conn = $db->getConnection();
+
+// lista de fichas para el filtro
+$stmt = $conn->query("SELECT id_ficha, codigo_ficha, nombre_programa FROM ficha ORDER BY codigo_ficha");
+$lista_fichas = $stmt->fetchAll();
+
+// filtros de busqueda
+$fecha_inicio = $_GET['fecha_inicio'] ?? '';
+$fecha_fin = $_GET['fecha_fin'] ?? '';
+$ficha = $_GET['ficha'] ?? '';
+$estado = $_GET['estado'] ?? '';
+
+// reporte completo con datos del aprendiz y ficha
+$sql = "SELECT CONCAT(u.nombre, ' ', u.apellido) AS nombre, u.numero_documento AS documento,
+    f.codigo_ficha AS ficha, i.fecha, i.hora_entrada_registrada AS entrada,
+    i.hora_salida_registrada AS salida, i.minutos_retardo AS retardo, i.estado_asistencia AS estado
+    FROM ingreso i
+    INNER JOIN usuario u ON u.id_usuario = i.id_aprendiz
+    INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = u.id_usuario
+    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha";
+
+// condiciones segun filtros activos
+$condiciones = [];
+if ($fecha_inicio != '') $condiciones[] = "i.fecha >= '$fecha_inicio'";
+if ($fecha_fin != '') $condiciones[] = "i.fecha <= '$fecha_fin'";
+if ($ficha != '') $condiciones[] = "uf.id_ficha = $ficha";
+if ($estado != '') $condiciones[] = "i.estado_asistencia = '$estado'";
+if (count($condiciones) > 0) $sql .= " WHERE " . implode(' AND ', $condiciones);
+$sql .= " ORDER BY i.fecha DESC, i.hora_entrada_registrada DESC";
+$stmt = $conn->query($sql);
+$reporte_asistencias = $stmt->fetchAll();
+
+// calcular totales segun el estado
+$total_normales = 0;
+$total_retardos = 0;
+$total_inasistencias = 0;
+$total_salidas = 0;
+foreach ($reporte_asistencias as $registro) {
+    switch ($registro['estado']) {
+        case 'Normal': $total_normales++; break;
+        case 'Retardo': $total_retardos++; break;
+        case 'Inasistencia': $total_inasistencias++; break;
+        case 'Salida Temprana': $total_salidas++; break;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
