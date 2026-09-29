@@ -25,23 +25,28 @@ if (isset($_POST['documento'])) {
 
     // guardar el aprendiz con rol 3
     // los signos ? son los valores que se pasan despues en execute
-    $stmt = $conn->prepare("INSERT INTO usuario
-        (numero_documento, nombre, apellido, correo, password, rfid_uid, id_rol, estado)
-        VALUES (?, ?, ?, ?, ?, ?, 3, 'Activo')");
-    $stmt->execute([$numero_documento, $nombre, $apellido, $correo, $password, $rfid]);
+    try {
+        $stmt = $conn->prepare("INSERT INTO usuario
+            (numero_documento, nombre, apellido, correo, password, rfid_uid, id_rol, estado)
+            VALUES (?, ?, ?, ?, ?, ?, 3, 'Activo')");
+        $stmt->execute([$numero_documento, $nombre, $apellido, $correo, $password, $rfid]);
 
-    // id del aprendiz recien creado
-    $id_nuevo = $conn->lastInsertId();
+        // id del aprendiz recien creado
+        $id_nuevo = $conn->lastInsertId();
 
-    // asignarlo a la ficha elegida en el formulario
-    if ($ficha != '') {
-        $stmt = $conn->prepare("INSERT INTO usuario_has_ficha (id_aprendiz, id_ficha) VALUES (?, ?)");
-        $stmt->execute([$id_nuevo, $ficha]);
+        // asignarlo a la ficha elegida en el formulario
+        if ($ficha != '') {
+            $stmt = $conn->prepare("INSERT INTO usuario_has_ficha (id_aprendiz, id_ficha) VALUES (?, ?)");
+            $stmt->execute([$id_nuevo, $ficha]);
+        }
+
+        // redirigir a la misma pagina con mensaje de exito
+        header('Location: admin_aprendices.php?agregado=1');
+        exit();
+    } catch (Exception $e) {
+        // si el documento ya existe se muestra el error sin romper la pagina
+        $duplicado = true;
     }
-
-    // redirigir a la misma pagina con mensaje de exito
-    header('Location: admin_aprendices.php?agregado=1');
-    exit();
 }
 
 // filtros de busqueda
@@ -233,6 +238,10 @@ $lista_aprendices = $stmt->fetchAll();
     if (urlParams.get('agregado') === '1') {
         SenaToast.success('Listo', 'Aprendiz agregado correctamente');
     }
+    // si el documento ya existe se muestra el error sin recargar
+    <?php if (isset($duplicado)): ?>
+    SenaToast.error('Documento duplicado', 'Ya existe un aprendiz con ese numero de documento');
+    <?php endif; ?>
     </script>
 
 </body>
