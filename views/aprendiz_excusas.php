@@ -2,6 +2,21 @@
 require_once '../model/auth_helper.php';
 requiereLogin();
 requiereRol('Aprendiz');
+
+// conexion a la base de datos
+require_once '../config/database.php';
+$db = new Database();
+$conn = $db->getConnection();
+
+// id del aprendiz logueado
+$id = $_SESSION['id_usuario'];
+
+// excusas enviadas por el aprendiz
+$stmt = $conn->query("SELECT fecha_inasistencia AS fecha, observacion AS motivo, estado, fecha_revision
+    FROM excusa
+    WHERE id_aprendiz = $id
+    ORDER BY fecha_inasistencia DESC");
+$mis_excusas = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="es">

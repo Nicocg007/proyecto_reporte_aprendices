@@ -2,6 +2,33 @@
 require_once '../model/auth_helper.php';
 requiereLogin();
 requiereRol('Aprendiz');
+
+// conexion a la base de datos
+require_once '../config/database.php';
+$db = new Database();
+$conn = $db->getConnection();
+
+// id del aprendiz logueado
+$id = $_SESSION['id_usuario'];
+
+// datos de la ficha del aprendiz con su instructor
+$stmt = $conn->query("SELECT f.codigo_ficha, f.nombre_programa, f.hora_entrada, f.hora_salida,
+    CONCAT(ui.nombre, ' ', ui.apellido) AS instructor_nombre, ui.correo AS instructor_correo,
+    (SELECT COUNT(*) FROM usuario_has_ficha WHERE id_ficha = f.id_ficha) AS total_aprendices_ficha
+    FROM usuario_has_ficha uf
+    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
+    INNER JOIN usuario ui ON ui.id_usuario = f.id_instructor_encargado
+    WHERE uf.id_aprendiz = $id");
+$ficha = $stmt->fetch();
+
+// separar los datos de la ficha
+$codigo_ficha = $ficha['codigo_ficha'] ?? '--';
+$nombre_programa = $ficha['nombre_programa'] ?? '--';
+$hora_entrada = $ficha['hora_entrada'] ?? '--';
+$hora_salida = $ficha['hora_salida'] ?? '--';
+$total_aprendices_ficha = $ficha['total_aprendices_ficha'] ?? 0;
+$instructor_nombre = $ficha['instructor_nombre'] ?? '--';
+$instructor_correo = $ficha['instructor_correo'] ?? '--';
 ?>
 <!DOCTYPE html>
 <html lang="es">

@@ -2,6 +2,22 @@
 require_once '../model/auth_helper.php';
 requiereLogin();
 requiereRol('Aprendiz');
+
+// conexion a la base de datos
+require_once '../config/database.php';
+$db = new Database();
+$conn = $db->getConnection();
+
+// id del aprendiz logueado
+$id = $_SESSION['id_usuario'];
+
+// historial completo de asistencia del aprendiz
+$stmt = $conn->query("SELECT fecha, hora_entrada_registrada AS entrada, hora_salida_registrada AS salida,
+    minutos_retardo AS retardo, estado_asistencia AS estado
+    FROM ingreso
+    WHERE id_aprendiz = $id
+    ORDER BY fecha DESC, hora_entrada_registrada DESC");
+$mi_historial = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="es">
