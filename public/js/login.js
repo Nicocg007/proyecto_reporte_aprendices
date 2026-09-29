@@ -25,17 +25,10 @@ function togglePassword() {
 document.getElementById('loginForm').addEventListener('submit', function(e) {
     const documento = document.getElementById('documento').value.trim();
     const password = document.getElementById('password').value.trim();
-    const rol = document.getElementById('rol').value;
 
     if (!documento || !password) {
         e.preventDefault();
         SenaToast.warning('Campos vacios', 'Por favor completa todos los campos');
-        return;
-    }
-
-    if (!rol) {
-        e.preventDefault();
-        SenaToast.warning('Rol requerido', 'Selecciona tu rol para continuar');
         return;
     }
 
@@ -45,24 +38,10 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
         return;
     }
 
-    e.preventDefault();
-
+    // Si todo esta bien, deja que el form haga el POST real a auth_controller.php
     const btn = this.querySelector('button[type="submit"]');
     btn.disabled = true;
     btn.innerHTML = '<span class="loading loading-spinner loading-sm"></span> Verificando...';
-
-    const rutas = {
-        'admin': '../views/admin_dashboard.php',
-        'instructor': '../views/instructor_dashboard.php',
-        'aprendiz': '../views/aprendiz_dashboard.php'
-    };
-
-    setTimeout(() => {
-        SenaToast.success('Bienvenido!', 'Has iniciado sesion exitosamente');
-        setTimeout(() => {
-            window.location.href = rutas[rol];
-        }, 800);
-    }, 1000);
 });
 
 // Mostrar mensajes por URL
@@ -91,6 +70,8 @@ function mostrarMensajes() {
         '1':   ['Usuario no encontrado', 'El numero de documento no esta registrado'],
         '2':   ['Contrasena incorrecta', 'La contrasena ingresada no es correcta'],
         '3':   ['Sesion expirada', 'Tu sesion ha expirado, inicia sesion nuevamente'],
+        '4':   ['Campos vacios', 'Por favor completa todos los campos'],
+        '6':   ['Usuario inactivo', 'Tu cuenta esta inactiva, contacta al administrador'],
         '500': ['Error del servidor', 'Ocurrio un error inesperado, intenta de nuevo']
     };
 
