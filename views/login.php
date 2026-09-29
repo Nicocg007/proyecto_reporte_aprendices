@@ -59,7 +59,7 @@
                 </div>
 
                 
-                <form id="loginForm" class="space-y-5">
+                <form id="loginForm" class="space-y-5" method="POST" action="../controllers/auth_controller.php">
 
                     
                     <div class="input-group">

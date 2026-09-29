@@ -1,3 +1,8 @@
+<?php
+require_once '../model/auth_helper.php';
+requiereLogin();
+requiereRol('Aprendiz');
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

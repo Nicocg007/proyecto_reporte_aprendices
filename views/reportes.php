@@ -1,3 +1,7 @@
+<?php
+require_once '../model/auth_helper.php';
+requiereLogin();
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
