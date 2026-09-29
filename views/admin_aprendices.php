@@ -2,6 +2,44 @@
 require_once '../model/auth_helper.php';
 requiereLogin();
 requiereRol('Administrador');
+
+// conexion a la base de datos
+require_once '../config/database.php';
+$db = new Database();
+$conn = $db->getConnection();
+
+// lista de fichas para el filtro
+$stmt = $conn->query("SELECT id_ficha, codigo_ficha FROM ficha ORDER BY codigo_ficha");
+$lista_fichas = $stmt->fetchAll();
+
+// filtros de busqueda
+$buscar = $_GET['buscar'] ?? '';
+$ficha = $_GET['ficha'] ?? '';
+$estado = $_GET['estado'] ?? '';
+
+// lista de aprendices con su ficha
+$sql = "SELECT u.numero_documento AS documento, CONCAT(u.nombre, ' ', u.apellido) AS nombre, u.correo,
+    f.codigo_ficha AS ficha, u.rfid_uid AS rfid, u.estado
+    FROM usuario u
+    LEFT JOIN usuario_has_ficha uf ON uf.id_aprendiz = u.id_usuario
+    LEFT JOIN ficha f ON f.id_ficha = uf.id_ficha
+    WHERE u.id_rol = 3";
+
+// filtro por nombre o documento
+if ($buscar != '') {
+    $sql .= " AND (u.numero_documento LIKE '%$buscar%' OR u.nombre LIKE '%$buscar%')";
+}
+// filtro por ficha
+if ($ficha != '') {
+    $sql .= " AND uf.id_ficha = $ficha";
+}
+// filtro por estado
+if ($estado != '') {
+    $sql .= " AND u.estado = '$estado'";
+}
+$sql .= " ORDER BY u.nombre";
+$stmt = $conn->query($sql);
+$lista_aprendices = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="es">
