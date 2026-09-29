@@ -2,6 +2,39 @@
 require_once '../model/auth_helper.php';
 requiereLogin();
 requiereRol('Administrador');
+
+// conexion a la base de datos
+require_once '../config/database.php';
+$db = new Database();
+$conn = $db->getConnection();
+
+// total de aprendices usuarios con rol 3 = aprendices
+$stmt = $conn->query("SELECT COUNT(*) AS total FROM usuario WHERE id_rol = 3");
+$total_aprendices = $stmt->fetch()['total'];
+
+// total de fichas
+$stmt = $conn->query("SELECT COUNT(*) AS total FROM ficha");
+$total_fichas = $stmt->fetch()['total'];
+
+// asistencias de hoy
+$stmt = $conn->query("SELECT COUNT(*) AS total FROM ingreso WHERE fecha = CURDATE()");
+$asistencias_hoy = $stmt->fetch()['total'];
+
+// excusas pendientes
+$stmt = $conn->query("SELECT COUNT(*) AS total FROM excusa WHERE estado = 'Pendiente'");
+$excusas_pendientes = $stmt->fetch()['total'];
+
+// ultimas 5 asistencias aprendiz, ficha, hora de entrada, estado
+$stmt = $conn->query(
+    "SELECT u.nombre, f.codigo_ficha AS ficha, i.hora_entrada_registrada AS entrada, i.estado_asistencia AS estado
+     FROM ingreso i
+     INNER JOIN usuario u ON i.id_aprendiz = u.id_usuario
+     INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = u.id_usuario
+     INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
+     ORDER BY i.fecha DESC, i.hora_entrada_registrada DESC
+     LIMIT 5"
+);
+$ultimas_asistencias = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="es">
