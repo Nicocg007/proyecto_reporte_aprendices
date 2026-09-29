@@ -12,6 +12,38 @@ $conn = $db->getConnection();
 $stmt = $conn->query("SELECT id_ficha, codigo_ficha FROM ficha ORDER BY codigo_ficha");
 $lista_fichas = $stmt->fetchAll();
 
+// insertar un nuevo aprendiz cuando llega el formulario
+if (isset($_POST['documento'])) {
+    // datos del formulario
+    $numero_documento = $_POST['documento'];
+    $nombre = $_POST['nombre'];
+    $apellido = $_POST['apellido'];
+    $correo = $_POST['correo'];
+    $password = $_POST['password'];
+    $rfid = $_POST['rfid'] ?? null;
+    $ficha = $_POST['ficha'] ?? '';
+
+    // guardar el aprendiz con rol 3
+    // los signos ? son los valores que se pasan despues en execute
+    $stmt = $conn->prepare("INSERT INTO usuario
+        (numero_documento, nombre, apellido, correo, password, rfid_uid, id_rol, estado)
+        VALUES (?, ?, ?, ?, ?, ?, 3, 'Activo')");
+    $stmt->execute([$numero_documento, $nombre, $apellido, $correo, $password, $rfid]);
+
+    // id del aprendiz recien creado
+    $id_nuevo = $conn->lastInsertId();
+
+    // asignarlo a la ficha elegida en el formulario
+    if ($ficha != '') {
+        $stmt = $conn->prepare("INSERT INTO usuario_has_ficha (id_aprendiz, id_ficha) VALUES (?, ?)");
+        $stmt->execute([$id_nuevo, $ficha]);
+    }
+
+    // redirigir a la misma pagina con mensaje de exito
+    header('Location: admin_aprendices.php?success=1');
+    exit();
+}
+
 // filtros de busqueda
 $buscar = $_GET['buscar'] ?? '';
 $ficha = $_GET['ficha'] ?? '';
@@ -101,10 +133,61 @@ $lista_aprendices = $stmt->fetchAll();
         <div class="dashboard-card">
             <div class="card-header">
                 <h2 class="card-title">Aprendices</h2>
-                <a href="#" class="btn-filter-primary" style="text-decoration:none;">
+                <a href="#" class="btn-filter-primary" style="text-decoration:none;" onclick="document.getElementById('formAgregar').style.display='block'; return false;">
                     <i data-lucide="user-plus" class="w-4 h-4"></i>
                     Agregar Aprendiz
                 </a>
+            </div>
+
+            <div class="dashboard-card" id="formAgregar" style="margin-bottom: 20px; display:none;">
+                <div class="card-header">
+                    <h2 class="card-title">Agregar Nuevo Aprendiz</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="admin_aprendices.php">
+                        <div class="filter-grid" style="grid-template-columns: repeat(3, 1fr);">
+                            <div class="filter-group">
+                                <label class="filter-label">Numero de Documento</label>
+                                <input type="text" name="documento" class="filter-input" required>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Nombre</label>
+                                <input type="text" name="nombre" class="filter-input" required>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Apellido</label>
+                                <input type="text" name="apellido" class="filter-input" required>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Correo</label>
+                                <input type="email" name="correo" class="filter-input">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Contrasena</label>
+                                <input type="text" name="password" class="filter-input" value="123456" required>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">RFID</label>
+                                <input type="text" name="rfid" class="filter-input" placeholder="Opcional">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Ficha</label>
+                                <select name="ficha" class="filter-input">
+                                    <option value="">Sin ficha</option>
+                                    <?php foreach ($lista_fichas as $ficha_opcion): ?>
+                                        <option value="<?php echo $ficha_opcion['id_ficha']; ?>"><?php echo $ficha_opcion['codigo_ficha']; ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filter-actions" style="margin-top: 15px;">
+                            <button type="submit" class="btn-filter-primary">
+                                <i data-lucide="save" class="w-4 h-4"></i>
+                                Guardar Aprendiz
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
             <div class="card-body" style="padding: 0;">
                 <table class="data-table">
@@ -143,6 +226,14 @@ $lista_aprendices = $stmt->fetchAll();
     </main>
 
     <?php include 'components/footer.php'; ?>
+
+    <script>
+    // mostrar mensaje de exito si trae ?success=1 en la url
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === '1') {
+        SenaToast.success('Listo', 'Aprendiz agregado correctamente');
+    }
+    </script>
 
 </body>
 </html>
