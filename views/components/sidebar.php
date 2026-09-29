@@ -22,6 +22,10 @@
             <i data-lucide="book-open" class="w-5 h-5"></i>
             <span>Fichas</span>
         </a>
+        <a href="rfid.php" class="sidebar-link">
+            <i data-lucide="scan-line" class="w-5 h-5"></i>
+            <span>Registro RFID</span>
+        </a>
         <a href="reportes.php" class="sidebar-link">
             <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
             <span>Reportes</span>

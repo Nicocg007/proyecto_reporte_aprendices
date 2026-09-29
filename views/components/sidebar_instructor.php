@@ -22,6 +22,10 @@
             <i data-lucide="clipboard-check" class="w-5 h-5"></i>
             <span>Asistencia</span>
         </a>
+        <a href="rfid.php" class="sidebar-link">
+            <i data-lucide="scan-line" class="w-5 h-5"></i>
+            <span>Registro RFID</span>
+        </a>
         <a href="instructor_excusas.php" class="sidebar-link">
             <i data-lucide="file-check" class="w-5 h-5"></i>
             <span>Revisar Excusas</span>
