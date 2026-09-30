@@ -142,7 +142,7 @@ $segundos_restantes = $segundos_restantes > 0 ? $segundos_restantes : 0;
                     <p class="text-slate-500 text-sm mt-1">Escribe tu numero de documento y te enviamos un codigo al correo</p>
                 </div>
 
-                <form method="POST" action="olvidar_contraseña.php" class="space-y-5">
+                <form method="POST" action="olvidar_contrasena.php" class="space-y-5">
                     <div class="input-group">
                         <i data-lucide="user" class="icon-input w-5 h-5"></i>
                         <input
@@ -167,7 +167,7 @@ $segundos_restantes = $segundos_restantes > 0 ? $segundos_restantes : 0;
                     <p class="text-slate-500 text-sm mt-1">Te enviamos un codigo de 6 numeros a <?php echo $correo_destino ?? ''; ?></p>
                 </div>
 
-                <form method="POST" action="olvidar_contraseña.php" class="space-y-5">
+                <form method="POST" action="olvidar_contrasena.php" class="space-y-5">
                     <div class="input-group">
                         <i data-lucide="shield" class="icon-input w-5 h-5"></i>
                         <input
