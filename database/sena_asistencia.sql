@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS `sena_asistencia`.`usuario_has_ficha` (
   `id_ficha` INT NOT NULL,
   PRIMARY KEY (`id_aprendiz_ficha`),
   INDEX `fk_usuario_has_ficha_ficha1_idx` (`id_ficha` ASC),
-  INDEX `fk_usuario_has_ficha_usuario1_idx` (`id_aprendiz` ASC),
+  UNIQUE INDEX `id_aprendiz_UNIQUE` (`id_aprendiz` ASC),
   CONSTRAINT `fk_usuario_has_ficha_usuario1`
     FOREIGN KEY (`id_aprendiz`)
     REFERENCES `sena_asistencia`.`usuario` (`id_usuario`)
