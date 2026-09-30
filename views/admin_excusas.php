@@ -13,8 +13,8 @@ $stmt = $conn->query("SELECT COUNT(*) AS total FROM excusa WHERE estado = 'Pendi
 $excusas_pendientes = $stmt->fetch()['total'];
 
 // excusas pendientes con aprendiz e instructor
-$stmt = $conn->query("SELECT CONCAT(u.nombre, ' ', u.apellido) AS nombre_aprendiz, e.fecha_inasistencia AS fecha,
-    e.observacion AS motivo, CONCAT(ui.nombre, ' ', ui.apellido) AS instructor
+$stmt = $conn->query("SELECT e.id_excusa AS id, CONCAT(u.nombre, ' ', u.apellido) AS nombre_aprendiz, e.fecha_inasistencia AS fecha,
+    e.observacion AS motivo, e.archivo_adjunto, CONCAT(ui.nombre, ' ', ui.apellido) AS instructor
     FROM excusa e
     INNER JOIN usuario u ON u.id_usuario = e.id_aprendiz
     LEFT JOIN usuario ui ON ui.id_usuario = e.id_instructor_revisor
@@ -24,7 +24,7 @@ $excusas_por_revisar = $stmt->fetchAll();
 
 // excusas ya revisadas
 $stmt = $conn->query("SELECT CONCAT(u.nombre, ' ', u.apellido) AS nombre_aprendiz, e.fecha_inasistencia AS fecha,
-    e.observacion AS motivo, e.estado, e.fecha_revision
+    e.observacion AS motivo, e.estado, e.archivo_adjunto, e.fecha_revision
     FROM excusa e
     INNER JOIN usuario u ON u.id_usuario = e.id_aprendiz
     WHERE e.estado <> 'Pendiente'
@@ -56,6 +56,7 @@ $excusas_revisadas = $stmt->fetchAll();
                             <th>Aprendiz</th>
                             <th>Fecha Inasistencia</th>
                             <th>Motivo</th>
+                            <th>Archivo</th>
                             <th>Instructor</th>
                             <th>Accion</th>
                         </tr>
@@ -67,18 +68,26 @@ $excusas_revisadas = $stmt->fetchAll();
                                     <td class="font-medium"><?php echo $excusa['nombre_aprendiz']; ?></td>
                                     <td><?php echo $excusa['fecha']; ?></td>
                                     <td><?php echo $excusa['motivo']; ?></td>
+                                    <td>
+                                        <?php if (!empty($excusa['archivo_adjunto'])): ?>
+                                            <a href="../<?php echo $excusa['archivo_adjunto']; ?>" target="_blank" class="text-teal-600 font-medium">Ver archivo</a>
+                                        <?php else: ?>
+                                            <span class="text-slate-400">Sin archivo</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><?php echo $excusa['instructor']; ?></td>
                                     <td>
-                                        <div class="flex gap-2">
-                                            <button class="badge-status badge-normal" style="cursor:pointer;border:none;">Aprobar</button>
-                                            <button class="badge-status badge-inasistencia" style="cursor:pointer;border:none;">Rechazar</button>
-                                        </div>
+                                        <form method="POST" action="../controllers/excusa_controller.php" class="flex gap-2">
+                                            <input type="hidden" name="id_excusa" value="<?php echo $excusa['id']; ?>">
+                                            <button type="submit" name="accion" value="aprobar" class="badge-status badge-normal" style="cursor:pointer;border:none;">Aprobar</button>
+                                            <button type="submit" name="accion" value="rechazar" class="badge-status badge-inasistencia" style="cursor:pointer;border:none;">Rechazar</button>
+                                        </form>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="5" class="text-center py-8 text-slate-400">No hay excusas pendientes</td>
+                                <td colspan="6" class="text-center py-8 text-slate-400">No hay excusas pendientes</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -97,6 +106,7 @@ $excusas_revisadas = $stmt->fetchAll();
                             <th>Aprendiz</th>
                             <th>Fecha Inasistencia</th>
                             <th>Motivo</th>
+                            <th>Archivo</th>
                             <th>Estado</th>
                             <th>Fecha Revision</th>
                         </tr>
@@ -108,13 +118,20 @@ $excusas_revisadas = $stmt->fetchAll();
                                     <td class="font-medium"><?php echo $excusa['nombre_aprendiz']; ?></td>
                                     <td><?php echo $excusa['fecha']; ?></td>
                                     <td><?php echo $excusa['motivo']; ?></td>
+                                    <td>
+                                        <?php if (!empty($excusa['archivo_adjunto'])): ?>
+                                            <a href="../<?php echo $excusa['archivo_adjunto']; ?>" target="_blank" class="text-teal-600 font-medium">Ver archivo</a>
+                                        <?php else: ?>
+                                            <span class="text-slate-400">Sin archivo</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><span class="badge-status badge-<?php echo strtolower($excusa['estado']); ?>"><?php echo $excusa['estado']; ?></span></td>
                                     <td><?php echo $excusa['fecha_revision']; ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="5" class="text-center py-8 text-slate-400">No hay excusas revisadas</td>
+                                <td colspan="6" class="text-center py-8 text-slate-400">No hay excusas revisadas</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -125,6 +142,23 @@ $excusas_revisadas = $stmt->fetchAll();
     </main>
 
     <?php include 'components/footer.php'; ?>
+
+    <script>
+    // mostrar mensajes segun lo que traiga la url
+    const urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.get('revisada') === 'aprobada') {
+        SenaToast.success('Listo', 'La excusa fue aprobada');
+    }
+
+    if (urlParams.get('revisada') === 'rechazada') {
+        SenaToast.warning('Listo', 'La excusa fue rechazada');
+    }
+
+    if (urlParams.get('error') === '1') {
+        SenaToast.error('Error', 'No se pudo revisar la excusa');
+    }
+    </script>
 
 </body>
 </html>
