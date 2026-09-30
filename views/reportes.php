@@ -17,6 +17,9 @@ $fecha_fin = $_GET['fecha_fin'] ?? '';
 $ficha = $_GET['ficha'] ?? '';
 $estado = $_GET['estado'] ?? '';
 
+// filtros actuales para pasarlos a la exportacion
+$query_actual = http_build_query($_GET);
+
 // reporte completo con datos del aprendiz y ficha
 $sql = "SELECT CONCAT(u.nombre, ' ', u.apellido) AS nombre, u.numero_documento AS documento,
     f.codigo_ficha AS ficha, i.fecha, i.hora_entrada_registrada AS entrada,
@@ -163,14 +166,14 @@ foreach ($reporte_asistencias as $registro) {
             <div class="card-header">
                 <h2 class="card-title">Reporte de Asistencias</h2>
                 <div class="export-buttons">
-                    <button class="btn-export btn-pdf">
+                    <a href="../controllers/exportar_controller.php?tipo=pdf&<?php echo $query_actual; ?>" target="_blank" class="btn-export btn-pdf" style="text-decoration:none;">
                         <i data-lucide="file-text" class="w-4 h-4"></i>
                         PDF
-                    </button>
-                    <button class="btn-export btn-excel">
+                    </a>
+                    <a href="../controllers/exportar_controller.php?tipo=excel&<?php echo $query_actual; ?>" class="btn-export btn-excel" style="text-decoration:none;">
                         <i data-lucide="table" class="w-4 h-4"></i>
                         Excel
-                    </button>
+                    </a>
                 </div>
             </div>
             <div class="card-body" style="padding: 0;">
