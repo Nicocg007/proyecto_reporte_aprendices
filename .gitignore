@@ -2,6 +2,10 @@
 public/uploads/*
 !public/uploads/.gitkeep
 
+# Adjuntos de excusas subidos por los aprendices
+uploads/excusas/*
+!uploads/excusas/.gitkeep
+
 # Logs y editores
 *.log
 .vscode/
