@@ -17,17 +17,19 @@ $fecha_fin = $_GET['fecha_fin'] ?? '';
 $ficha = $_GET['ficha'] ?? '';
 $estado = $_GET['estado'] ?? '';
 
-// filtros actuales para pasarlos a la exportacion
-$query_actual = http_build_query($_GET);
+// filtros activos para pasarlos a la exportacion y a la paginacion
+$filtros = [
+    'fecha_inicio' => $fecha_inicio,
+    'fecha_fin' => $fecha_fin,
+    'ficha' => $ficha,
+    'estado' => $estado,
+];
+$filtros_activos = array_filter($filtros, function ($v) { return $v !== ''; });
+$query_actual = http_build_query($filtros_activos);
 
-// reporte completo con datos del aprendiz y ficha
-$sql = "SELECT CONCAT(u.nombre, ' ', u.apellido) AS nombre, u.numero_documento AS documento,
-    f.codigo_ficha AS ficha, i.fecha, i.hora_entrada_registrada AS entrada,
-    i.hora_salida_registrada AS salida, i.minutos_retardo AS retardo, i.estado_asistencia AS estado
-    FROM ingreso i
-    INNER JOIN usuario u ON u.id_usuario = i.id_aprendiz
-    INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = u.id_usuario
-    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha";
+// cuantos registros se muestran por pagina
+$por_pagina = 10;
+$pagina = max(1, (int)($_GET['pagina'] ?? 1));
 
 // condiciones segun filtros activos
 $condiciones = [];
@@ -35,24 +37,52 @@ if ($fecha_inicio != '') $condiciones[] = "i.fecha >= '$fecha_inicio'";
 if ($fecha_fin != '') $condiciones[] = "i.fecha <= '$fecha_fin'";
 if ($ficha != '') $condiciones[] = "uf.id_ficha = $ficha";
 if ($estado != '') $condiciones[] = "i.estado_asistencia = '$estado'";
-if (count($condiciones) > 0) $sql .= " WHERE " . implode(' AND ', $condiciones);
-$sql .= " ORDER BY i.fecha DESC, i.hora_entrada_registrada DESC";
+$where = count($condiciones) > 0 ? " WHERE " . implode(' AND ', $condiciones) : '';
+
+// de donde vienen los datos, se repite en las consultas
+$from = " FROM ingreso i
+    INNER JOIN usuario u ON u.id_usuario = i.id_aprendiz
+    INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = u.id_usuario
+    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha";
+
+// total de registros para armar la paginacion
+$stmt = $conn->query("SELECT COUNT(*) AS total" . $from . $where);
+$total_registros = $stmt->fetch()['total'];
+$total_paginas = max(1, (int)ceil($total_registros / $por_pagina));
+
+// si piden una pagina que no existe se usa la ultima
+if ($pagina > $total_paginas) {
+    $pagina = $total_paginas;
+}
+$offset = ($pagina - 1) * $por_pagina;
+
+// reporte de la pagina actual
+$sql = "SELECT CONCAT(u.nombre, ' ', u.apellido) AS nombre, u.numero_documento AS documento,
+    f.codigo_ficha AS ficha, i.fecha, i.hora_entrada_registrada AS entrada,
+    i.hora_salida_registrada AS salida, i.minutos_retardo AS retardo, i.estado_asistencia AS estado"
+    . $from . $where . "
+    ORDER BY i.fecha DESC, i.hora_entrada_registrada DESC
+    LIMIT $por_pagina OFFSET $offset";
 $stmt = $conn->query($sql);
 $reporte_asistencias = $stmt->fetchAll();
 
-// calcular totales segun el estado
+// totales de todo el filtro, no solo de la pagina
 $total_normales = 0;
 $total_retardos = 0;
 $total_inasistencias = 0;
 $total_salidas = 0;
-foreach ($reporte_asistencias as $registro) {
-    switch ($registro['estado']) {
-        case 'Normal': $total_normales++; break;
-        case 'Retardo': $total_retardos++; break;
-        case 'Inasistencia': $total_inasistencias++; break;
-        case 'Salida Temprana': $total_salidas++; break;
+$stmt = $conn->query("SELECT i.estado_asistencia AS estado, COUNT(*) AS total" . $from . $where . " GROUP BY i.estado_asistencia");
+foreach ($stmt->fetchAll() as $fila) {
+    switch ($fila['estado']) {
+        case 'Normal': $total_normales = $fila['total']; break;
+        case 'Retardo': $total_retardos = $fila['total']; break;
+        case 'Inasistencia': $total_inasistencias = $fila['total']; break;
+        case 'Salida Temprana': $total_salidas = $fila['total']; break;
     }
 }
+
+// enlace base para los botones de paginacion
+$url_pagina = 'reportes.php?' . ($query_actual !== '' ? $query_actual . '&' : '') . 'pagina=';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -214,19 +244,57 @@ foreach ($reporte_asistencias as $registro) {
             </div>
         </div>
 
+        <?php if ($total_paginas > 1): ?>
         <div class="pagination">
-            <button class="pagination-btn" disabled>
-                <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                Anterior
-            </button>
+            <?php if ($pagina > 1): ?>
+                <a href="<?php echo $url_pagina . ($pagina - 1); ?>" class="pagination-btn" style="text-decoration:none;">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                    Anterior
+                </a>
+            <?php else: ?>
+                <span class="pagination-btn" style="opacity:.5;cursor:not-allowed;">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                    Anterior
+                </span>
+            <?php endif; ?>
+
             <div class="pagination-numbers">
-                <button class="pagination-num active">1</button>
+                <?php
+                $inicio_rango = max(1, $pagina - 2);
+                $fin_rango = min($total_paginas, $pagina + 2);
+                ?>
+                <?php if ($inicio_rango > 1): ?>
+                    <a href="<?php echo $url_pagina; ?>1" class="pagination-num" style="text-decoration:none;">1</a>
+                    <?php if ($inicio_rango > 2): ?><span class="pagination-dots">...</span><?php endif; ?>
+                <?php endif; ?>
+
+                <?php for ($p = $inicio_rango; $p <= $fin_rango; $p++): ?>
+                    <?php if ($p == $pagina): ?>
+                        <span class="pagination-num active"><?php echo $p; ?></span>
+                    <?php else: ?>
+                        <a href="<?php echo $url_pagina . $p; ?>" class="pagination-num" style="text-decoration:none;"><?php echo $p; ?></a>
+                    <?php endif; ?>
+                <?php endfor; ?>
+
+                <?php if ($fin_rango < $total_paginas): ?>
+                    <?php if ($fin_rango < $total_paginas - 1): ?><span class="pagination-dots">...</span><?php endif; ?>
+                    <a href="<?php echo $url_pagina . $total_paginas; ?>" class="pagination-num" style="text-decoration:none;"><?php echo $total_paginas; ?></a>
+                <?php endif; ?>
             </div>
-            <button class="pagination-btn" disabled>
-                Siguiente
-                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-            </button>
+
+            <?php if ($pagina < $total_paginas): ?>
+                <a href="<?php echo $url_pagina . ($pagina + 1); ?>" class="pagination-btn" style="text-decoration:none;">
+                    Siguiente
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </a>
+            <?php else: ?>
+                <span class="pagination-btn" style="opacity:.5;cursor:not-allowed;">
+                    Siguiente
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </span>
+            <?php endif; ?>
         </div>
+        <?php endif; ?>
 
     </main>
 
