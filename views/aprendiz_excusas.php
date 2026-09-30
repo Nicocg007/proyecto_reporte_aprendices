@@ -12,7 +12,7 @@ $conn = $db->getConnection();
 $id = $_SESSION['id_usuario'];
 
 // excusas enviadas por el aprendiz
-$stmt = $conn->query("SELECT fecha_inasistencia AS fecha, observacion AS motivo, estado, fecha_revision
+$stmt = $conn->query("SELECT fecha_inasistencia AS fecha, observacion AS motivo, estado, archivo_adjunto, fecha_revision
     FROM excusa
     WHERE id_aprendiz = $id
     ORDER BY fecha_inasistencia DESC");
@@ -36,7 +36,8 @@ $mis_excusas = $stmt->fetchAll();
                 <h2 class="card-title">Enviar Nueva Excusa</h2>
             </div>
             <div class="card-body">
-                <form method="POST" action="#" enctype="multipart/form-data">
+                <form method="POST" action="../controllers/excusa_controller.php" enctype="multipart/form-data">
+                    <input type="hidden" name="accion" value="enviar">
                     <div class="filter-grid">
                         <div class="filter-group">
                             <label class="filter-label">Fecha de Inasistencia</label>
@@ -71,6 +72,7 @@ $mis_excusas = $stmt->fetchAll();
                         <tr>
                             <th>Fecha Inasistencia</th>
                             <th>Motivo</th>
+                            <th>Archivo</th>
                             <th>Estado</th>
                             <th>Fecha Revision</th>
                         </tr>
@@ -81,13 +83,20 @@ $mis_excusas = $stmt->fetchAll();
                                 <tr>
                                     <td><?php echo $excusa['fecha']; ?></td>
                                     <td><?php echo $excusa['motivo']; ?></td>
+                                    <td>
+                                        <?php if (!empty($excusa['archivo_adjunto'])): ?>
+                                            <a href="../<?php echo $excusa['archivo_adjunto']; ?>" target="_blank" class="text-teal-600 font-medium">Ver archivo</a>
+                                        <?php else: ?>
+                                            <span class="text-slate-400">Sin archivo</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><span class="badge-status badge-<?php echo strtolower($excusa['estado']); ?>"><?php echo $excusa['estado']; ?></span></td>
                                     <td><?php echo $excusa['fecha_revision'] ?? '--'; ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="4" class="text-center py-8 text-slate-400">No has enviado excusas</td>
+                                <td colspan="5" class="text-center py-8 text-slate-400">No has enviado excusas</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -98,6 +107,31 @@ $mis_excusas = $stmt->fetchAll();
     </main>
 
     <?php include 'components/footer.php'; ?>
+
+    <script>
+    // mostrar mensajes segun lo que traiga la url
+    const urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.get('enviada') === '1') {
+        SenaToast.success('Listo', 'Excusa enviada correctamente');
+    }
+
+    if (urlParams.get('error_campos') === '1') {
+        SenaToast.error('Faltan datos', 'La fecha y el motivo son obligatorios');
+    }
+
+    if (urlParams.get('error_archivo') === '1') {
+        SenaToast.error('Archivo no valido', 'Solo se permiten archivos pdf, jpg o png');
+    }
+
+    if (urlParams.get('error_tamano') === '1') {
+        SenaToast.error('Archivo muy pesado', 'El archivo no puede superar los 5 megas');
+    }
+
+    if (urlParams.get('error_subida') === '1') {
+        SenaToast.error('Error al subir', 'No se pudo guardar el archivo, intenta de nuevo');
+    }
+    </script>
 
 </body>
 </html>
