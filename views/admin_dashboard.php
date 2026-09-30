@@ -8,6 +8,11 @@ require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
 
+// marcar las inasistencias de ayer y de hoy (hoy solo despues de la hora de salida)
+require_once '../model/asistencia_helper.php';
+marcarInasistencias($conn, date('Y-m-d', strtotime('-1 day')));
+marcarInasistencias($conn, date('Y-m-d'));
+
 // total de aprendices usuarios con rol 3 = aprendices
 $stmt = $conn->query("SELECT COUNT(*) AS total FROM usuario WHERE id_rol = 3");
 $total_aprendices = $stmt->fetch()['total'];
@@ -182,6 +187,14 @@ $ultimas_asistencias = $stmt->fetchAll();
     </main>
 
     <?php include 'components/footer.php'; ?>
+
+    <script>
+    // aviso cuando se corren las inasistencias desde el controlador
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('inasistencias')) {
+        SenaToast.info('Inasistencias', 'Se marcaron ' + urlParams.get('inasistencias') + ' inasistencias');
+    }
+    </script>
 
 </body>
 </html>

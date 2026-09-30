@@ -8,6 +8,11 @@ require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
 
+// marcar las inasistencias de ayer y de hoy (hoy solo despues de la hora de salida)
+require_once '../model/asistencia_helper.php';
+marcarInasistencias($conn, date('Y-m-d', strtotime('-1 day')));
+marcarInasistencias($conn, date('Y-m-d'));
+
 // id del instructor logueado (de la sesion)
 $id = $_SESSION['id_usuario'];
 
