@@ -168,7 +168,7 @@ $lista_aprendices = $stmt->fetchAll();
                                 <input type="email" name="correo" class="filter-input">
                             </div>
                             <div class="filter-group">
-                                <label class="filter-label">Contrasena</label>
+                                <label class="filter-label">Contraseña</label>
                                 <input type="text" name="password" class="filter-input" value="123456" required>
                             </div>
                             <div class="filter-group">

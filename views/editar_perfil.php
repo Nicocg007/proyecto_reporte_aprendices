@@ -34,12 +34,12 @@ if (isset($_POST['enviar_codigo'])) {
     $password_nueva = $_POST['password_nueva'];
     $password_confirmar = $_POST['password_confirmar'];
 
-    // traer la contrasena guardada en la base
+    // traer la contraseña guardada en la base
     $stmt = $conn->prepare("SELECT password FROM usuario WHERE id_usuario = ?");
     $stmt->execute([$usuario['id']]);
     $fila = $stmt->fetch();
 
-    // revisar que la contrasena actual sea correcta
+    // revisar que la contraseña actual sea correcta
     if ($password_actual !== $fila['password']) {
         $mostrar_error = 'La contraseña actual no es correcta';
     } elseif ($password_nueva !== $password_confirmar) {
@@ -50,7 +50,7 @@ if (isset($_POST['enviar_codigo'])) {
         // generar un codigo aleatorio de 6 numeros
         $codigo = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        // guardar el codigo y la contrasena nueva en la sesion
+        // guardar el codigo y la contraseña nueva en la sesion
         $_SESSION['codigo_cambio'] = $codigo;
         $_SESSION['password_provisoria'] = $password_nueva;
 
@@ -73,7 +73,7 @@ if (isset($_POST['enviar_codigo'])) {
     }
 }
 
-// al llegar el codigo se valida y se guarda la contrasena nueva
+// al llegar el codigo se valida y se guarda la contraseña nueva
 if (isset($_POST['cambiar_password'])) {
     $codigo_ingresado = $_POST['codigo'] ?? '';
 
@@ -86,7 +86,7 @@ if (isset($_POST['cambiar_password'])) {
             $stmt = $conn->prepare("UPDATE usuario SET password = ? WHERE id_usuario = ?");
             $stmt->execute([$_SESSION['password_provisoria'], $usuario['id']]);
 
-            // borrar el codigo y la contrasena temporal de la sesion
+            // borrar el codigo y la contraseña temporal de la sesion
             unset($_SESSION['codigo_cambio'], $_SESSION['password_provisoria'], $_SESSION['codigo_expiracion']);
 
             header('Location: editar_perfil.php?rol=' . $rol . '&password=1');

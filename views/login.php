@@ -82,7 +82,7 @@
                             type="password"
                             name="password"
                             id="password"
-                            placeholder="Contrasena"
+                            placeholder="Contraseña"
                             class="input input-bordered w-full h-12 rounded-xl input-focus transition-all duration-200 pr-10"
                             required
                             autocomplete="current-password"
@@ -109,7 +109,7 @@
                             <input type="checkbox" class="checkbox checkbox-sm checkbox-success" name="recordar">
                             <span class="text-slate-600">Recordarme</span>
                         </label>
-                        <a href="olvidar_contrasena.php" class="text-teal-600 hover:text-teal-700 font-medium">
+                        <a href="olvidar_contraseña.php" class="text-teal-600 hover:text-teal-700 font-medium">
                             ¿Olvidaste tu contraseña?
                         </a>
                     </div>

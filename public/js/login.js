@@ -5,7 +5,7 @@
 // Inicializar iconos Lucide
 lucide.createIcons();
 
-// Mostrar / ocultar contrasena
+// Mostrar / ocultar contraseña
 function togglePassword() {
     const input = document.getElementById('password');
     const icon = document.getElementById('eyeIcon');
@@ -58,9 +58,9 @@ function mostrarMensajes() {
         return;
     }
 
-    // Toast de contrasena restablecida
+    // Toast de contraseña restablecida
     if (reset === '1') {
-        SenaToast.success('Contraseña cambiada', 'Inicia sesion con tu nueva contrasena');
+        SenaToast.success('Contraseña cambiada', 'Inicia sesion con tu nueva contraseña');
         return;
     }
 
@@ -75,7 +75,7 @@ function mostrarMensajes() {
     // Toast de errores
     const errores = {
         '1':   ['Usuario no encontrado', 'El numero de documento no esta registrado'],
-        '2':   ['Contrasena incorrecta', 'La contrasena ingresada no es correcta'],
+        '2':   ['Contraseña incorrecta', 'La contraseña ingresada no es correcta'],
         '3':   ['Sesion expirada', 'Tu sesion ha expirado, inicia sesion nuevamente'],
         '4':   ['Campos vacios', 'Por favor completa todos los campos'],
         '6':   ['Usuario inactivo', 'Tu cuenta esta inactiva, contacta al administrador'],

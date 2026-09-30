@@ -2,7 +2,7 @@
 require_once '../config/database.php';
 require_once '../config/mail.php';
 
-// si ya hay sesion activa, no hace falta recuperar contrasena
+// si ya hay sesion activa, no hace falta recuperar contraseña
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -49,14 +49,14 @@ if (isset($_POST['enviar_codigo'])) {
     }
 }
 
-// cambiar la contrasena cuando llega el codigo y la contrasena nueva
+// cambiar la contraseña cuando llega el codigo y la contraseña nueva
 if (isset($_POST['cambiar_password'])) {
     $codigo_ingresado = $_POST['codigo'] ?? '';
     $password_nueva = $_POST['password_nueva'] ?? '';
     $password_confirmar = $_POST['password_confirmar'] ?? '';
     $documento = $_SESSION['reset_documento'] ?? '';
 
-    // revisar el codigo, la vigencia y la contrasena nueva
+    // revisar el codigo, la vigencia y la contraseña nueva
     if ($codigo_ingresado != ($_SESSION['reset_codigo'] ?? '')) {
         $error_codigo = 'El código no es correcto. Revisa tu correo';
     } elseif (time() > ($_SESSION['reset_expiracion'] ?? 0)) {
@@ -66,7 +66,7 @@ if (isset($_POST['cambiar_password'])) {
     } elseif (strlen($password_nueva) < 6) {
         $error_codigo = 'La contraseña debe tener al menos 6 caracteres';
     } else {
-        // cambiar la contrasena del usuario del documento guardado
+        // cambiar la contraseña del usuario del documento guardado
         $stmt = $conn->prepare("UPDATE usuario SET password = ? WHERE numero_documento = ?");
         $stmt->execute([$password_nueva, $documento]);
 
@@ -142,7 +142,7 @@ $segundos_restantes = $segundos_restantes > 0 ? $segundos_restantes : 0;
                     <p class="text-slate-500 text-sm mt-1">Escribe tu numero de documento y te enviamos un codigo al correo</p>
                 </div>
 
-                <form method="POST" action="olvidar_contrasena.php" class="space-y-5">
+                <form method="POST" action="olvidar_contraseña.php" class="space-y-5">
                     <div class="input-group">
                         <i data-lucide="user" class="icon-input w-5 h-5"></i>
                         <input
@@ -167,7 +167,7 @@ $segundos_restantes = $segundos_restantes > 0 ? $segundos_restantes : 0;
                     <p class="text-slate-500 text-sm mt-1">Te enviamos un codigo de 6 numeros a <?php echo $correo_destino ?? ''; ?></p>
                 </div>
 
-                <form method="POST" action="olvidar_contrasena.php" class="space-y-5">
+                <form method="POST" action="olvidar_contraseña.php" class="space-y-5">
                     <div class="input-group">
                         <i data-lucide="shield" class="icon-input w-5 h-5"></i>
                         <input
