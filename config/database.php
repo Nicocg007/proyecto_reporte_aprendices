@@ -10,6 +10,18 @@ class Database {
     private $password = ''; // contraseña de usuario de phpmyadmin
     private $conn; // conexion cuando ya exista
 
+    // carga la configuracion local si existe, no se sube al repo
+    public function __construct() {
+        $local = __DIR__ . '/database.local.php';
+        if (file_exists($local)) {
+            $config = require $local;
+            $this->host = $config['host'] ?? $this->host;
+            $this->db_name = $config['db_name'] ?? $this->db_name;
+            $this->username = $config['username'] ?? $this->username;
+            $this->password = $config['password'] ?? $this->password;
+        }
+    }
+
     // metodo que devuelve la conexion lista para usar
     public function getConnection() {
         $this->conn = null; // inicia la conexion en null si esta vacia

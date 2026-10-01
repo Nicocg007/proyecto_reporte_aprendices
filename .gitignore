@@ -10,3 +10,6 @@ uploads/excusas/*
 *.log
 .vscode/
 .idea/
+
+# Configuracion local de la base de datos (cada maquina la suya)
+config/database.local.php
