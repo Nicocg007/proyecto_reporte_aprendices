@@ -18,6 +18,10 @@
             <i data-lucide="book-open" class="w-5 h-5"></i>
             <span>Mis Fichas</span>
         </a>
+        <a href="horario.php" class="sidebar-link">
+            <i data-lucide="calendar-days" class="w-5 h-5"></i>
+            <span>Horario</span>
+        </a>
         <a href="instructor_asistencia.php" class="sidebar-link">
             <i data-lucide="clipboard-check" class="w-5 h-5"></i>
             <span>Asistencia</span>

@@ -26,6 +26,10 @@
             <i data-lucide="book-open" class="w-5 h-5"></i>
             <span>Fichas</span>
         </a>
+        <a href="horario.php" class="sidebar-link">
+            <i data-lucide="calendar-days" class="w-5 h-5"></i>
+            <span>Horario</span>
+        </a>
         <a href="rfid.php" class="sidebar-link">
             <i data-lucide="scan-line" class="w-5 h-5"></i>
             <span>Registro RFID</span>
