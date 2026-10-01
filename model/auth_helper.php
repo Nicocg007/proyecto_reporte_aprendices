@@ -20,9 +20,22 @@ function requiereRol($rol_requerido){
     requiereLogin(); // verifica que este logueado
 
     // si el rol de la sesion no coincide con lo requerido
-    if($_SESSION['rol'] !== $rol_requerido){
-        // lo saco al login
-        header('Location: login.php');
+    if(($_SESSION['rol'] ?? '') !== $rol_requerido){
+        // si esta logueado con otro rol lo llevo a su propio panel
+        // asi no parece que se le cerro la sesion
+        $destino = 'login.php';
+        switch ($_SESSION['rol'] ?? '') {
+            case 'Administrador':
+                $destino = 'admin_dashboard.php';
+                break;
+            case 'Instructor':
+                $destino = 'instructor_dashboard.php';
+                break;
+            case 'Aprendiz':
+                $destino = 'aprendiz_dashboard.php';
+                break;
+        }
+        header('Location: ' . $destino);
         exit();
     }
 }
