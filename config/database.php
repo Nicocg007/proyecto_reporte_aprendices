@@ -7,7 +7,7 @@ class Database {
     private $host = 'localhost';
     private $db_name = 'sena_asistencia'; // nombre de la base de datos
     private $username = 'root'; // usuario de phpmyadmin
-    private $password = '2005'; // contraseña de usuario de phpmyadmin
+    private $password = ''; // contraseña de usuario de phpmyadmin
     private $conn; // conexion cuando ya exista
 
     // metodo que devuelve la conexion lista para usar
