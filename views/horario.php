@@ -2,9 +2,9 @@
 require_once '../model/auth_helper.php';
 requiereLogin();
 
-// solo admin e instructor pueden ver el horario
+// admin, instructor y aprendiz pueden ver el horario
 $rol_actual = $_SESSION['rol'] ?? '';
-if ($rol_actual !== 'Administrador' && $rol_actual !== 'Instructor') {
+if (!in_array($rol_actual, ['Administrador', 'Instructor', 'Aprendiz'])) {
     header('Location: login.php');
     exit();
 }
@@ -14,16 +14,41 @@ require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
 
+// el instructor solo ve sus propias clases
+$filtro_instructor = null;
+if ($rol_actual === 'Instructor') {
+    $filtro_instructor = trim(($_SESSION['nombre'] ?? '') . ' ' . ($_SESSION['apellido'] ?? ''));
+}
+
+// el aprendiz solo ve el horario de su ficha
+$ficha_aprendiz = null;
+if ($rol_actual === 'Aprendiz') {
+    $stmt = $conn->prepare("SELECT f.id_ficha
+        FROM usuario_has_ficha uf
+        INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
+        WHERE uf.id_aprendiz = ?
+        ORDER BY f.codigo_ficha LIMIT 1");
+    $stmt->execute([$_SESSION['id_usuario']]);
+    $fila = $stmt->fetch();
+    if ($fila) {
+        $ficha_aprendiz = (int)$fila['id_ficha'];
+    }
+}
+
 // fichas que tienen horario cargado
 $fichas = $conn->query("SELECT DISTINCT f.id_ficha, f.codigo_ficha, f.nombre_programa
     FROM ficha f
     INNER JOIN horario h ON h.id_ficha = f.id_ficha
     ORDER BY f.codigo_ficha")->fetchAll();
 
-// ficha seleccionada por la url
-$id_ficha = (int)($_GET['ficha'] ?? 0);
-if ($id_ficha === 0 && !empty($fichas)) {
-    $id_ficha = (int)$fichas[0]['id_ficha'];
+// ficha seleccionada
+if ($rol_actual === 'Aprendiz') {
+    $id_ficha = $ficha_aprendiz ?: 0;
+} else {
+    $id_ficha = (int)($_GET['ficha'] ?? 0);
+    if ($id_ficha === 0 && !empty($fichas)) {
+        $id_ficha = (int)$fichas[0]['id_ficha'];
+    }
 }
 
 // datos de la ficha y rango de horas y fechas
@@ -39,9 +64,15 @@ if ($id_ficha > 0) {
     $stmt->execute([$id_ficha]);
     $ficha_actual = $stmt->fetch();
 
-    $stmt = $conn->prepare("SELECT MIN(hora_inicio) AS hi, MAX(hora_fin) AS hf, MIN(fecha) AS fi, MAX(fecha) AS ff
-        FROM horario WHERE id_ficha = ?");
-    $stmt->execute([$id_ficha]);
+    $sql_rango = "SELECT MIN(hora_inicio) AS hi, MAX(hora_fin) AS hf, MIN(fecha) AS fi, MAX(fecha) AS ff
+        FROM horario WHERE id_ficha = ?";
+    $params_rango = [$id_ficha];
+    if ($filtro_instructor !== null) {
+        $sql_rango .= " AND (instructor LIKE ? OR es_festivo = 1)";
+        $params_rango[] = $filtro_instructor . '%';
+    }
+    $stmt = $conn->prepare($sql_rango);
+    $stmt->execute($params_rango);
     $rango = $stmt->fetch();
     if (!empty($rango['hi'])) {
         $hora_min = $rango['hi'];
@@ -71,11 +102,17 @@ $hay_next = $fecha_max && $sabado->format('Y-m-d') < $fecha_max;
 $mapa = [];
 $festivos = [];
 if ($ficha_actual) {
-    $stmt = $conn->prepare("SELECT fecha, hora_inicio, instructor, competencia, es_festivo
+    $sql = "SELECT fecha, hora_inicio, instructor, competencia, es_festivo
         FROM horario
-        WHERE id_ficha = ? AND fecha BETWEEN ? AND ?
-        ORDER BY fecha, hora_inicio");
-    $stmt->execute([$id_ficha, $lunes->format('Y-m-d'), $sabado->format('Y-m-d')]);
+        WHERE id_ficha = ? AND fecha BETWEEN ? AND ?";
+    $params = [$id_ficha, $lunes->format('Y-m-d'), $sabado->format('Y-m-d')];
+    if ($filtro_instructor !== null) {
+        $sql .= " AND (instructor LIKE ? OR es_festivo = 1)";
+        $params[] = $filtro_instructor . '%';
+    }
+    $sql .= " ORDER BY fecha, hora_inicio";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
     foreach ($stmt->fetchAll() as $fila) {
         $dia = (int)date('N', strtotime($fila['fecha'])) - 1; // 0 lunes ... 5 sabado
         if ($dia < 0 || $dia > 5) {
@@ -114,6 +151,18 @@ foreach ($mapa as $por_hora) {
     }
 }
 ksort($instructores_semana);
+
+// navbar y sidebar segun el rol
+if ($rol_actual === 'Administrador') {
+    $sidebar = 'components/sidebar.php';
+    $navbar = 'components/navbar.php';
+} elseif ($rol_actual === 'Instructor') {
+    $sidebar = 'components/sidebar_instructor.php';
+    $navbar = 'components/navbar_instructor.php';
+} else {
+    $sidebar = 'components/sidebar_aprendiz.php';
+    $navbar = 'components/navbar_aprendiz.php';
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -135,15 +184,17 @@ ksort($instructores_semana);
 </head>
 <body>
 
-    <?php include ($rol_actual === 'Administrador' ? 'components/sidebar.php' : 'components/sidebar_instructor.php'); ?>
+    <?php include $sidebar; ?>
 
-    <?php include ($rol_actual === 'Administrador' ? 'components/navbar.php' : 'components/navbar_instructor.php'); ?>
+    <?php include $navbar; ?>
 
     <main class="main-content">
 
         <div class="dashboard-card">
             <div class="card-header">
-                <h2 class="card-title">Horario de Formacion</h2>
+                <h2 class="card-title">
+                    <?php echo $rol_actual === 'Instructor' ? 'Mi Horario' : 'Horario de Formacion'; ?>
+                </h2>
                 <div class="horario-nav">
                     <?php if ($hay_prev): ?>
                         <a class="btn-filter-primary" style="text-decoration:none;"
@@ -164,22 +215,30 @@ ksort($instructores_semana);
             </div>
 
             <div class="card-body">
-                <div class="filter-actions" style="margin-bottom: 15px; gap: 8px; flex-wrap: wrap;">
-                    <?php foreach ($fichas as $ficha_opcion): ?>
-                        <a class="btn-filter-primary" style="text-decoration:none; <?php echo ((int)$ficha_opcion['id_ficha'] === $id_ficha) ? '' : 'background:#e2e8f0;color:#1e293b;'; ?>"
-                           href="horario.php?ficha=<?php echo $ficha_opcion['id_ficha']; ?>">
-                            Ficha <?php echo $ficha_opcion['codigo_ficha']; ?>
-                        </a>
-                    <?php endforeach; ?>
-                </div>
+                <?php if ($rol_actual !== 'Aprendiz' && !empty($fichas)): ?>
+                    <div class="filter-actions" style="margin-bottom: 15px; gap: 8px; flex-wrap: wrap;">
+                        <?php foreach ($fichas as $ficha_opcion): ?>
+                            <a class="btn-filter-primary" style="text-decoration:none; <?php echo ((int)$ficha_opcion['id_ficha'] === $id_ficha) ? '' : 'background:#e2e8f0;color:#1e293b;'; ?>"
+                               href="horario.php?ficha=<?php echo $ficha_opcion['id_ficha']; ?>">
+                                Ficha <?php echo $ficha_opcion['codigo_ficha']; ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
 
-                <?php if ($ficha_actual): ?>
+                <?php if (!$ficha_actual): ?>
+                    <p class="text-center text-slate-400" style="padding: 30px;">
+                        <?php echo $rol_actual === 'Aprendiz' ? 'Todavia no tienes una ficha asignada.' : 'No hay horarios cargados todavia.'; ?>
+                    </p>
+                <?php elseif (!$fecha_min): ?>
+                    <p class="text-center text-slate-400" style="padding: 30px;">
+                        <?php echo $rol_actual === 'Instructor' ? 'No tienes clases en este horario.' : 'Esta ficha aun no tiene horario cargado.'; ?>
+                    </p>
+                <?php else: ?>
                     <p class="text-slate-500" style="margin-bottom: 10px;">
                         <strong><?php echo htmlspecialchars($ficha_actual['nombre_programa']); ?></strong>
                         (<?php echo htmlspecialchars($ficha_actual['codigo_ficha']); ?>)
-                        <?php if ($hora_min && $hora_max): ?>
-                            - jornada <?php echo substr($hora_min, 0, 5); ?> a <?php echo substr($hora_max, 0, 5); ?>
-                        <?php endif; ?>
+                        - jornada <?php echo substr($hora_min, 0, 5); ?> a <?php echo substr($hora_max, 0, 5); ?>
                     </p>
 
                     <div style="overflow-x: auto;">
@@ -229,10 +288,6 @@ ksort($instructores_semana);
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
-                <?php else: ?>
-                    <p class="text-center text-slate-400" style="padding: 30px;">
-                        No hay horarios cargados todavia.
-                    </p>
                 <?php endif; ?>
             </div>
         </div>

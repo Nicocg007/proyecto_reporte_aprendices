@@ -26,6 +26,10 @@
             <i data-lucide="book-open" class="w-5 h-5"></i>
             <span>Mi Ficha</span>
         </a>
+        <a href="horario.php" class="sidebar-link">
+            <i data-lucide="calendar-days" class="w-5 h-5"></i>
+            <span>Horario</span>
+        </a>
     </nav>
 
     <div class="sidebar-footer">
