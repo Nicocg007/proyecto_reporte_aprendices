@@ -9,7 +9,7 @@ INSERT INTO `roles` (`id_rol`, `nombre`) VALUES
 -- 2. Insertar Usuarios de Prueba
 -- Se corrigió la columna 'contraseña' por 'password'
 INSERT INTO `usuario` (`numero_documento`, `nombre`, `apellido`, `correo`, `password`, `rfid_uid`, `id_rol`, `estado`) VALUES
-('1000000001', 'Admin', 'SENA', 'admin@sena.edu.co', '123456', NULL, 1, 'Activo'),
+('1114150420', 'Admin', 'SENA', 'xivivi5170@deertees.com', '12345', NULL, 1, 'Activo'),
 ('1000000002', 'Juan Camilo', 'Vanegas González', 'jvanegas@sena.edu.co', '123456', NULL, 2, 'Activo'),
 ('1000000003', 'Carlos', 'Pérez', 'cperez@gmail.com', '123456', 'RFID-A1B2C3D4', 3, 'Activo'),
 ('1000000004', 'María', 'López', 'mlopez@gmail.com', '123456', 'RFID-E5F6G7H8', 3, 'Activo');
