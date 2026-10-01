@@ -12,10 +12,45 @@
             <input type="text" placeholder="Buscar..." class="navbar-search-input">
         </div>
 
-        <button class="navbar-icon-btn" id="notificationsBtn">
-            <i data-lucide="bell" class="w-5 h-5"></i>
-            <span class="navbar-badge">1</span>
-        </button>
+        <?php
+        // notificaciones reales de la campana segun el rol
+        if (!isset($conn)) {
+            require_once __DIR__ . '/../../config/database.php';
+            $db = new Database();
+            $conn = $db->getConnection();
+        }
+        require_once __DIR__ . '/../../model/notificacion_helper.php';
+        $notificaciones = obtenerNotificaciones($conn, $_SESSION['id_usuario'], $_SESSION['rol']);
+        ?>
+        <div class="notif-menu">
+            <button class="navbar-icon-btn" id="notificationsBtn">
+                <i data-lucide="bell" class="w-5 h-5"></i>
+                <?php if (count($notificaciones) > 0): ?>
+                    <span class="navbar-badge"><?php echo count($notificaciones); ?></span>
+                <?php endif; ?>
+            </button>
+
+            <div class="user-dropdown notif-dropdown" id="notifDropdown">
+                <div class="dropdown-header">
+                    <span class="dropdown-name">Notificaciones</span>
+                    <span class="dropdown-role"><?php echo count($notificaciones); ?> nueva(s)</span>
+                </div>
+                <div class="dropdown-divider"></div>
+                <?php if (count($notificaciones) > 0): ?>
+                    <?php foreach ($notificaciones as $notif): ?>
+                        <a href="<?php echo $notif['url']; ?>" class="dropdown-item notif-item">
+                            <i data-lucide="bell-ring" class="w-4 h-4"></i>
+                            <span><?php echo htmlspecialchars($notif['texto']); ?></span>
+                        </a>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="dropdown-item notif-item notif-empty">
+                        <i data-lucide="bell-off" class="w-4 h-4"></i>
+                        <span>No tienes notificaciones</span>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
 
         <div class="navbar-divider"></div>
 

@@ -73,11 +73,20 @@ function initSidebar() {
 
 function initNotifications() {
     const btn = document.getElementById('notificationsBtn');
-    if (btn) {
-        btn.addEventListener('click', function() {
-            SenaToast.info('Notificaciones', 'Tienes 3 excusas pendientes por revisar');
-        });
-    }
+    const dropdown = document.getElementById('notifDropdown');
+
+    if (!btn || !dropdown) return;
+
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.notif-menu')) {
+            dropdown.classList.remove('open');
+        }
+    });
 }
 
 function checkUrlParams() {

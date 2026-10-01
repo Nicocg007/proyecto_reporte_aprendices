@@ -376,6 +376,33 @@ body {
     color: #ef4444;
 }
 
+/* --- Notificaciones --- */
+.notif-menu {
+    position: relative;
+}
+
+.notif-dropdown {
+    width: 300px;
+}
+
+.notif-item {
+    align-items: flex-start;
+    white-space: normal;
+    line-height: 1.35;
+}
+
+.notif-item i {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.notif-empty,
+.notif-empty:hover {
+    background: transparent;
+    color: #94a3b8;
+    cursor: default;
+}
+
 /* --- Profile Edit --- */
 .profile-layout {
     display: grid;
