@@ -20,7 +20,9 @@ if (isset($_POST['documento'])) {
     $apellido = $_POST['apellido'];
     $correo = $_POST['correo'];
     $password = $_POST['password'];
-    $rfid = $_POST['rfid'] ?? null;
+    // el rfid es opcional: si viene vacio se guarda como null
+    $rfid = trim($_POST['rfid'] ?? '');
+    $rfid = $rfid !== '' ? $rfid : null;
     $ficha = $_POST['ficha'] ?? '';
 
     // guardar el aprendiz con rol 3
@@ -44,8 +46,13 @@ if (isset($_POST['documento'])) {
         header('Location: admin_aprendices.php?agregado=1');
         exit();
     } catch (Exception $e) {
-        // si el documento ya existe se muestra el error sin romper la pagina
+        // si algo ya existe se muestra el error sin romper la pagina
         $duplicado = true;
+        if (strpos($e->getMessage(), 'rfid_uid') !== false) {
+            $mensaje_duplicado = 'Ese RFID ya esta registrado en otro aprendiz';
+        } else {
+            $mensaje_duplicado = 'Ya existe un aprendiz con ese numero de documento';
+        }
     }
 }
 
@@ -238,9 +245,9 @@ $lista_aprendices = $stmt->fetchAll();
     if (urlParams.get('agregado') === '1') {
         SenaToast.success('Listo', 'Aprendiz agregado correctamente');
     }
-    // si el documento ya existe se muestra el error sin recargar
+    // si algo ya existe se muestra el error sin recargar
     <?php if (isset($duplicado)): ?>
-    SenaToast.error('Documento duplicado', 'Ya existe un aprendiz con ese numero de documento');
+    SenaToast.error('Registro duplicado', '<?php echo $mensaje_duplicado; ?>');
     <?php endif; ?>
     </script>
 

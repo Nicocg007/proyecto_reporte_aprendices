@@ -16,7 +16,7 @@ $conn = $db->getConnection();
 
 // registros de asistencia de hoy para la tabla
 $stmt = $conn->query("SELECT CONCAT(u.nombre, ' ', u.apellido) AS nombre,
-    i.hora_entrada_registrada AS entrada, i.minutos_retardo AS retardo, i.estado_asistencia AS estado
+    i.hora_entrada_registrada AS entrada, i.hora_salida_registrada AS salida, i.minutos_retardo AS retardo, i.estado_asistencia AS estado
     FROM ingreso i
     INNER JOIN usuario u ON u.id_usuario = i.id_aprendiz
     WHERE i.fecha = CURDATE()
@@ -30,6 +30,7 @@ $nombre = $_GET['nombre'] ?? '';
 
 if ($ok === '1') {
     $mensaje_ok = [
+        'tipo' => 'entrada',
         'nombre' => $nombre,
         'estado' => $_GET['estado'] ?? 'Normal',
         'retardo' => $_GET['retardo'] ?? '0',
@@ -37,12 +38,21 @@ if ($ok === '1') {
     ];
 }
 
+if ($ok === '2') {
+    $mensaje_ok = [
+        'tipo' => 'salida',
+        'nombre' => $nombre,
+        'hora' => $_GET['hora'] ?? '',
+        'temprana' => $_GET['temprana'] ?? '0'
+    ];
+}
+
 if ($error === '1') {
     $mensaje_error = 'La tarjeta no esta registrada en el sistema';
 } elseif ($error === '2') {
     $mensaje_error = $nombre . ' no se encuentra activo';
-} elseif ($error === '3') {
-    $mensaje_error = $nombre . ' ya registro su entrada hoy';
+} elseif ($error === '4') {
+    $mensaje_error = $nombre . ' ya completo su entrada y salida hoy';
 }
 ?>
 <!DOCTYPE html>
@@ -74,7 +84,7 @@ if ($error === '1') {
                     <i data-lucide="scan-line" class="w-12 h-12 text-teal-600"></i>
                 </div>
                 <p class="text-slate-600 font-medium">Pase la tarjeta RFID cerca del lector</p>
-                <p class="text-slate-400 text-sm">La tarjeta se lee sola al apoyarla, el sistema registra la entrada</p>
+                <p class="text-slate-400 text-sm">La tarjeta se lee sola al apoyarla, el sistema registra la entrada y la salida</p>
 
                 <form method="POST" action="../controllers/rfid_controller.php" id="rfidForm" style="margin-top: 18px;">
                     <input
@@ -100,6 +110,7 @@ if ($error === '1') {
                     <?php if (!empty($mensaje_ok)): ?>
                     <div class="dashboard-card" style="margin-top: 20px; border: 2px solid #10b981; border-radius: 14px;">
                         <div class="card-body" style="text-align: center;">
+                            <?php if ($mensaje_ok['tipo'] === 'entrada'): ?>
                             <span class="badge-status badge-normal" style="font-size: 1rem;">Entrada registrada</span>
                             <h3 class="card-title" style="margin-top: 8px;"><?php echo $mensaje_ok['nombre']; ?></h3>
                             <p class="text-slate-500 text-sm">
@@ -108,6 +119,14 @@ if ($error === '1') {
                             </p>
                             <?php if ($mensaje_ok['estado'] === 'Retardo'): ?>
                             <p class="text-amber-600 text-sm font-medium"><?php echo $mensaje_ok['retardo']; ?> minutos de retardo</p>
+                            <?php endif; ?>
+                            <?php else: ?>
+                            <span class="badge-status badge-normal" style="font-size: 1rem;">Salida registrada</span>
+                            <h3 class="card-title" style="margin-top: 8px;"><?php echo $mensaje_ok['nombre']; ?></h3>
+                            <p class="text-slate-500 text-sm">Hora: <strong><?php echo $mensaje_ok['hora']; ?></strong></p>
+                            <?php if ($mensaje_ok['temprana'] == '1'): ?>
+                            <p class="text-amber-600 text-sm font-medium">Salida temprana</p>
+                            <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -129,7 +148,7 @@ if ($error === '1') {
 
         <div class="dashboard-card" style="max-width: 760px; margin: 20px auto 0;">
             <div class="card-header">
-                <h2 class="card-title">Entradas de Hoy</h2>
+                <h2 class="card-title">Registros de Hoy</h2>
                 <span class="badge-status badge-retardo"><?php echo count($registros_hoy); ?> registros</span>
             </div>
             <div class="card-body" style="padding: 0;">
@@ -138,6 +157,7 @@ if ($error === '1') {
                         <tr>
                             <th>Aprendiz</th>
                             <th>Entrada</th>
+                            <th>Salida</th>
                             <th>Retardo</th>
                             <th>Estado</th>
                         </tr>
@@ -147,14 +167,15 @@ if ($error === '1') {
                             <?php foreach ($registros_hoy as $registro): ?>
                                 <tr>
                                     <td class="font-medium"><?php echo $registro['nombre']; ?></td>
-                                    <td><?php echo $registro['entrada']; ?></td>
+                                    <td><?php echo $registro['entrada'] ?? '--'; ?></td>
+                                    <td><?php echo $registro['salida'] ?? '--'; ?></td>
                                     <td><?php echo $registro['retardo'] ?? '0'; ?> min</td>
                                     <td><span class="badge-status badge-<?php echo strtolower($registro['estado']); ?>"><?php echo $registro['estado']; ?></span></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="4" class="text-center py-8 text-slate-400">Aun no hay entradas registradas hoy</td>
+                                <td colspan="5" class="text-center py-8 text-slate-400">Aun no hay registros hoy</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
