@@ -105,7 +105,7 @@ if ($modo_editar > 0) {
         <div class="dashboard-card">
             <div class="card-header">
                 <h2 class="card-title">Instructores</h2>
-                <a href="#" class="btn-filter-primary" style="text-decoration:none;" onclick="document.getElementById('formAgregar').style.display='block'; return false;">
+                <a href="#" class="btn-filter-primary" style="text-decoration:none;" onclick="return abrirFormAgregar();">
                     <i data-lucide="user-plus" class="w-4 h-4"></i>
                     Agregar Instructor
                 </a>
@@ -147,7 +147,7 @@ if ($modo_editar > 0) {
                             </div>
                             <div class="filter-group">
                                 <label class="filter-label">RFID</label>
-                                <input type="text" name="rfid" class="filter-input" value="<?php echo $instructor_editar['rfid_uid']; ?>">
+                                <input type="text" name="rfid" id="rfidInstructorEditar" class="filter-input" value="<?php echo $instructor_editar['rfid_uid']; ?>" placeholder="Escanea la tarjeta aqui" autocomplete="off">
                             </div>
                             <div class="filter-group">
                                 <label class="filter-label">Estado</label>
@@ -197,7 +197,7 @@ if ($modo_editar > 0) {
                             </div>
                             <div class="filter-group">
                                 <label class="filter-label">RFID</label>
-                                <input type="text" name="rfid" class="filter-input" placeholder="Opcional">
+                                <input type="text" name="rfid" id="rfidInstructor" class="filter-input" placeholder="Escanea la tarjeta aqui" autocomplete="off">
                             </div>
                         </div>
                         <div class="filter-actions" style="margin-top: 15px;">
@@ -268,6 +268,32 @@ if ($modo_editar > 0) {
     <?php if (isset($error_editar)): ?>
     SenaToast.error('No se pudo guardar', '<?php echo $mensaje_editar; ?>');
     <?php endif; ?>
+
+    // lector rfid: captura el codigo y evita que el enter del lector envie el formulario
+    function prepararRfid(input) {
+        if (!input) return;
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                input.blur();
+                SenaToast.success('RFID capturado', input.value);
+            }
+        });
+    }
+    prepararRfid(document.getElementById('rfidInstructor'));
+    prepararRfid(document.getElementById('rfidInstructorEditar'));
+
+    // abrir el formulario de agregar y dejar el rfid listo para escanear
+    function abrirFormAgregar() {
+        document.getElementById('formAgregar').style.display = 'block';
+        const input = document.getElementById('rfidInstructor');
+        if (input) input.focus();
+        return false;
+    }
+
+    // si se esta editando, enfocar el rfid para escanear
+    const rfidEditar = document.getElementById('rfidInstructorEditar');
+    if (rfidEditar) rfidEditar.focus();
     </script>
 
 </body>
