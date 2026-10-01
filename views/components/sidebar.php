@@ -18,6 +18,10 @@
             <i data-lucide="users" class="w-5 h-5"></i>
             <span>Aprendices</span>
         </a>
+        <a href="admin_instructores.php" class="sidebar-link">
+            <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+            <span>Instructores</span>
+        </a>
         <a href="admin_fichas.php" class="sidebar-link">
             <i data-lucide="book-open" class="w-5 h-5"></i>
             <span>Fichas</span>
