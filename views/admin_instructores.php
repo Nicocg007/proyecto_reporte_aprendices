@@ -30,7 +30,7 @@ if (isset($_POST['editar_instructor'])) {
         // cambiar la contraseña solo si se escribio una nueva
         if ($password !== '') {
             $stmt = $conn->prepare("UPDATE usuario SET password = ? WHERE id_usuario = ?");
-            $stmt->execute([$password, $id_instructor]);
+            $stmt->execute([hashearPassword($password), $id_instructor]);
         }
 
         header('Location: admin_instructores.php?editado=1');
@@ -60,7 +60,7 @@ if (isset($_POST['documento']) && empty($_POST['id_instructor'])) {
         $stmt = $conn->prepare("INSERT INTO usuario
             (numero_documento, nombre, apellido, correo, password, rfid_uid, id_rol, estado)
             VALUES (?, ?, ?, ?, ?, ?, 2, 'Activo')");
-        $stmt->execute([$numero_documento, $nombre, $apellido, $correo, $password, $rfid]);
+        $stmt->execute([$numero_documento, $nombre, $apellido, $correo, hashearPassword($password), $rfid]);
 
         header('Location: admin_instructores.php?agregado=1');
         exit();
