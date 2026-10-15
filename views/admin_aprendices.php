@@ -35,7 +35,7 @@ if (isset($_POST['editar_aprendiz'])) {
         // cambiar la contraseña solo si se escribio una nueva
         if ($password !== '') {
             $stmt = $conn->prepare("UPDATE usuario SET password = ? WHERE id_usuario = ?");
-            $stmt->execute([$password, $id_aprendiz]);
+            $stmt->execute([hashearPassword($password), $id_aprendiz]);
         }
 
         // dejar una sola ficha asignada
@@ -78,7 +78,7 @@ if (isset($_POST['documento']) && empty($_POST['id_aprendiz'])) {
         $stmt = $conn->prepare("INSERT INTO usuario
             (numero_documento, nombre, apellido, correo, password, rfid_uid, id_rol, estado)
             VALUES (?, ?, ?, ?, ?, ?, 3, 'Activo')");
-        $stmt->execute([$numero_documento, $nombre, $apellido, $correo, $password, $rfid]);
+        $stmt->execute([$numero_documento, $nombre, $apellido, $correo, hashearPassword($password), $rfid]);
 
         // id del aprendiz recien creado
         $id_nuevo = $conn->lastInsertId();
