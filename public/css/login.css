@@ -25,6 +25,18 @@ body {
     box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.3);
 }
 
+/* --- Texto de los campos (el tema wireframe lo deja muy claro) --- */
+.input-group input,
+.input-group select,
+.input {
+    color: #0f172a;
+}
+
+.input-group input::placeholder,
+.input::placeholder {
+    color: #94a3b8;
+}
+
 /* --- Boton login --- */
 .btn-login {
     background: linear-gradient(135deg, #0d9488, #0f766e);
