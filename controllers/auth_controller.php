@@ -2,6 +2,7 @@
 // se inicia la sesion
 session_start();
 require_once '../config/database.php';
+require_once '../model/auth_helper.php';
 
 // Por post
 if($_SERVER['REQUEST_METHOD'] === 'POST'){
@@ -36,7 +37,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
     }
     
     // si la contraseña no coincide
-    if($usuario['password'] !==$password){
+    if(!verificarPassword($password, $usuario['password'])){
         header('Location: ../views/login.php?error=2'); // si la contraseña es incorrecta
         exit();
     }
