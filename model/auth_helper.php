@@ -1,4 +1,14 @@
 <?php
+// genera el hash seguro de una contraseña para guardarla en la base
+function hashearPassword($password){
+    return password_hash($password, PASSWORD_DEFAULT);
+}
+
+// revisa si una contraseña coincide con el hash guardado
+function verificarPassword($ingresada, $guardada){
+    return password_verify($ingresada, $guardada);
+}
+
 // funcion que verifica que el usuario este logueado
 // se usa al inicio de las paginas internas
 function requiereLogin(){
