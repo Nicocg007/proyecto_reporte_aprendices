@@ -1,6 +1,7 @@
 <?php
 require_once '../config/database.php';
 require_once '../config/mail.php';
+require_once '../model/auth_helper.php';
 
 // si ya hay sesion activa, no hace falta recuperar contraseña
 if (session_status() === PHP_SESSION_NONE) {
@@ -68,7 +69,7 @@ if (isset($_POST['cambiar_password'])) {
     } else {
         // cambiar la contraseña del usuario del documento guardado
         $stmt = $conn->prepare("UPDATE usuario SET password = ? WHERE numero_documento = ?");
-        $stmt->execute([$password_nueva, $documento]);
+        $stmt->execute([hashearPassword($password_nueva), $documento]);
 
         // limpiar los datos del reseteo de la sesion
         unset($_SESSION['reset_documento'], $_SESSION['reset_codigo'], $_SESSION['reset_expiracion']);
