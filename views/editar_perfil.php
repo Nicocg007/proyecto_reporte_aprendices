@@ -40,7 +40,7 @@ if (isset($_POST['enviar_codigo'])) {
     $fila = $stmt->fetch();
 
     // revisar que la contraseña actual sea correcta
-    if ($password_actual !== $fila['password']) {
+    if (!verificarPassword($password_actual, $fila['password'])) {
         $mostrar_error = 'La contraseña actual no es correcta';
     } elseif ($password_nueva !== $password_confirmar) {
         $mostrar_error = 'La nueva contraseña y la confirmación no coinciden';
@@ -84,7 +84,7 @@ if (isset($_POST['cambiar_password'])) {
             $mostrar_error_codigo = 'El código ha expirado. Solicita uno nuevo';
         } else {
             $stmt = $conn->prepare("UPDATE usuario SET password = ? WHERE id_usuario = ?");
-            $stmt->execute([$_SESSION['password_provisoria'], $usuario['id']]);
+            $stmt->execute([hashearPassword($_SESSION['password_provisoria']), $usuario['id']]);
 
             // borrar el codigo y la contraseña temporal de la sesion
             unset($_SESSION['codigo_cambio'], $_SESSION['password_provisoria'], $_SESSION['codigo_expiracion']);
