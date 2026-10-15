@@ -1,6 +1,4 @@
-/* ========================================
-   SENA Control - Dashboard Styles
-   ======================================== */
+
 
 /* --- Base --- */
 body {
@@ -205,6 +203,11 @@ body {
     outline: none;
     transition: all 0.2s;
     font-family: 'Inter', sans-serif;
+    color: #0f172a;
+}
+
+.navbar-search-input::placeholder {
+    color: #94a3b8;
 }
 
 .navbar-search-input:focus {
@@ -835,6 +838,11 @@ body {
     transition: all 0.2s;
     font-family: 'Inter', sans-serif;
     background: #fff;
+    color: #0f172a;
+}
+
+.filter-input::placeholder {
+    color: #94a3b8;
 }
 
 .filter-input:focus {
