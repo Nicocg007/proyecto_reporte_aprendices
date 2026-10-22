@@ -1,0 +1,183 @@
+# ============================================================
+#  SENA Control de Asistencia - Configuracion del servidor
+# ============================================================
+#  Este archivo DEBE estar en la raiz del proyecto (junto a index.php).
+#
+#  REQUISITO IMPORTANTE:
+#  En httpd.conf el directorio del proyecto debe tener
+#      AllowOverride All
+#  (por defecto es "None" y entonces este archivo se ignora).
+#  Ver README de instalacion al final de este archivo.
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 1. Opciones generales del directorio
+# ------------------------------------------------------------
+# -Indexes  -> no mostrar listado de archivos en carpetas
+# -Includes -> no permitir Server Side Includes
+# MultiViews -> no permitir negotiation de extensiones (p.ej. .php5)
+Options -Indexes -Includes -MultiViews
+
+DirectoryIndex index.php
+
+# ------------------------------------------------------------
+# 2. Proteccion de carpetas internas
+# ------------------------------------------------------------
+# Estas carpetas se usan solo desde PHP (require_once), nunca
+# deben ser descargables por el navegador.
+#   config/   -> credenciales de base de datos y de correo
+#   model/    -> helpers con la logica del negocio
+#   database/ -> dump SQL con la estructura y los seeds
+#   vendor/   -> librerias de composer (PHPMailer)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 2.1 Carpetas internas:Forbidden (403)
+    RewriteRule ^(?:config|model|database|vendor)/? - [F,L,NC]
+
+    # 2.2 Archivos ocultos (.git, .htaccess, .env, .vscode, .idea...)
+    #     con excepcion de .well-known (usado por Let's Encrypt)
+    RewriteRule ^(?:.*/)?\.well-known/ - [L]
+    RewriteRule (?:^|/)\. - [F,L]
+
+    # 2.3 Archivos de configuracion y documentacion sueltos
+    RewriteRule ^(?:composer\.(?:json|lock)|README\.md|LICENSE)$ - [F,L,NC]
+</IfModule>
+
+# ------------------------------------------------------------
+# 3. Cabeceras de seguridad
+# ------------------------------------------------------------
+<IfModule mod_headers.c>
+    # Evitar que el navegador adivine el tipo de contenido
+    Header always set X-Content-Type-Options "nosniff"
+
+    # Evitar que la app se incruste en un iframe (clickjacking)
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # No filtrar la URL completa a sitios externos
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # No enviar informacion del visitante al referer
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+    # Cabecera antigua, ya obsoleta: se envia en 0 a proposito
+    Header always set X-XSS-Protection "0"
+
+    # Ocultar la version de PHP (mod_php) o del servidor
+    Header always unset X-Powered-By
+
+    # NOTA: "Server" no se puede quitar desde .htaccess (lo agrega
+    # el core despues de mod_headers). Para ocultarlo:
+    #     ServerTokens Prod
+    #     ServerSignature Off
+    # en httpd.conf. Ver seccion INSTALACION.
+</IfModule>
+
+# ------------------------------------------------------------
+# 4. Forzar HTTPS
+# ------------------------------------------------------------
+# ESTE BLOQUINO ESTA DESACTIVADO A PROPOSITO.
+#
+# Razon: si Apache no tiene SSL configurado, activar esto deja
+# la aplicacion INACCESIBLE (el navegador busca https:// y falla).
+# Activalo SOLO cuando ya tengas HTTPS funcionando.
+#
+# Pasos para activarlo:
+#   1. Configura el certificado SSL en el vhost de Apache.
+#   2. Quita los "#" de las lineas de este bloque.
+#   3. Si usas un proxy inverso que termina el TLS, revisa que
+#      envie la cabecera X-Forwarded-Proto.
+#
+# <IfModule mod_rewrite.c>
+#     RewriteCond %{HTTPS} !=on
+#     RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+#     RewriteCond %{HTTP_HOST} !^localhost
+#     RewriteCond %{HTTP_HOST} !^127\.0\.0\.1
+#     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+# </IfModule>
+
+# ------------------------------------------------------------
+# 5. Cache de archivos estaticos
+# ------------------------------------------------------------
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css            "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+    ExpiresByType image/jpeg          "access plus 30 days"
+    ExpiresByType image/png           "access plus 30 days"
+    ExpiresDefault                    "access plus 1 hour"
+</IfModule>
+
+# La compresion la resuelve mod_filter + mod_deflate.
+# OJO: AddOutputFilterByType es de mod_filter, no de mod_deflate.
+# Si mod_deflate estuviera cargado pero mod_filter no, esta
+# directiva provocaria un error 500 en TODO el sitio.
+<IfModule mod_filter.c>
+    <IfModule mod_deflate.c>
+        AddOutputFilterByType DEFLATE text/html text/css text/plain
+        AddOutputFilterByType DEFLATE application/javascript application/json
+        AddOutputFilterByType DEFLATE image/svg+xml
+    </IfModule>
+</IfModule>
+
+# ------------------------------------------------------------
+# 6. Limitar el tamano maximo de las peticiones
+# ------------------------------------------------------------
+# La app valida 5 MB para los adjuntos de excusa; este limite
+# impide que una peticion enorme agote la memoria del servidor.
+# Si se supera en un archivo estatico, Apache responde 413.
+#
+# OJO: en peticiones que PHP maneja, PHP aplica su propio limite
+# (post_max_size = 8M) y puede responder 200 aunque el cuerpo
+# se haya descartado. Para archivos estaticos si devuelve 413.
+LimitRequestBody 10485760
+
+# ------------------------------------------------------------
+# 7. Bloquear metodos HTTP que la app no usa
+# ------------------------------------------------------------
+# OJO: el metodo TRACE NO se puede bloquear desde aqui. Apache lo
+# atiende en el core, antes de que corran estas reglas, asi que
+# esta regla no lo detiene. Para cerrarlo de verdad:
+#     TraceEnable off
+# en httpd.conf (ver seccion INSTALACION).
+<IfModule mod_rewrite.c>
+    RewriteCond %{REQUEST_METHOD} ^(TRACK|DEBUG|CONNECT)$
+    RewriteRule .* - [F,L]
+</IfModule>
+
+
+# ============================================================
+#  INSTALACION
+# ============================================================
+#
+# 1) Copia el proyecto dentro del DocumentRoot de Apache, por
+#    ejemplo:
+#        /var/www/html/proyecto_reporte_aprendices
+#
+# 2) En /etc/httpd/conf/httpd.conf busca el bloque <Directory>
+#    de esa ruta y dejalo asi:
+#
+#        <Directory "/var/www/html/proyecto_reporte_aprendices">
+#            AllowOverride All
+#            Require all granted
+#        </Directory>
+#
+# 3) Si usas un VirtualHost propio, agrega lo mismo dentro de
+#    la etiqueta <Directory> de ese vhost.
+#
+# 4) Reinicia Apache:
+#        sudo systemctl restart httpd
+#
+# 5) Opcional pero recomendado, en httpd.conf (NO en .htaccess):
+#        ServerTokens Prod
+#        ServerSignature Off
+#        TraceEnable off
+#    Con esto se oculta la version de Apache y se cierra el metodo
+#    TRACE, que desde .htaccess no se puede bloquear.
+#
+# 6) Verifica que funciona:
+#        curl -I http://localhost/proyecto_reporte_aprendices/config/database.php
+#    debe responder 403 (Forbidden) y no mostrar nada.
+#
+# ============================================================
