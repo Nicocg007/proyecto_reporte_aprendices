@@ -1,8 +1,9 @@
 <?php
 // se inicia la sesion
-session_start();
+require_once '../model/seguridad_helper.php';
 require_once '../config/database.php';
 require_once '../model/auth_helper.php';
+iniciarSesionSegura();
 
 // Por post
 if($_SERVER['REQUEST_METHOD'] === 'POST'){
@@ -47,6 +48,9 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
         header('Location: ../views/login.php?error=6'); // usuario inactivo
         exit();
     }
+
+    // regenerar id de sesion para evitar fixation
+    session_regenerate_id(true);
 
     // guardar datos en la sesion
     $_SESSION['id_usuario']     = $usuario['id_usuario'];
