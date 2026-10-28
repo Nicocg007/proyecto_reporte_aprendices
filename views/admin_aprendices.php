@@ -13,7 +13,7 @@ $stmt = $conn->query("SELECT id_ficha, codigo_ficha FROM ficha ORDER BY codigo_f
 $lista_fichas = $stmt->fetchAll();
 
 // editar un aprendiz existente (solo admin)
-if (isset($_POST['editar_aprendiz'])) {
+if (isset($_POST['editar_aprendiz']) ) {
     $id_aprendiz = $_POST['id_aprendiz'] ?? '';
     $numero_documento = trim($_POST['documento'] ?? '');
     $nombre = trim($_POST['nombre'] ?? '');
@@ -25,7 +25,14 @@ if (isset($_POST['editar_aprendiz'])) {
     $ficha = $_POST['ficha'] ?? '';
     $estado = $_POST['estado'] ?? 'Activo';
 
-    try {
+    // validar que el nombre tenga al menos 5 caractares
+    if(mb_strlen(trim($nombre),'UTF-8')< 5)
+    {
+        $mensaje = "el nombre debe de contener al menos 5 caracteres";
+    }
+    else
+        {
+            try {
         // actualizar los datos del aprendiz
         $stmt = $conn->prepare("UPDATE usuario
             SET numero_documento = ?, nombre = ?, apellido = ?, correo = ?, rfid_uid = ?, estado = ?
@@ -57,6 +64,9 @@ if (isset($_POST['editar_aprendiz'])) {
             $mensaje_editar = 'Ese numero de documento ya esta registrado';
         }
     }
+        }
+
+    
 }
 
 // insertar un nuevo aprendiz cuando llega el formulario
@@ -235,7 +245,7 @@ if ($modo_editar > 0) {
                             </div>
                             <div class="filter-group">
                                 <label class="filter-label">Nombre</label>
-                                <input type="text" name="nombre" class="filter-input" value="<?php echo $aprendiz_editar['nombre']; ?>" required>
+                                <input type="text" name="nombre" class="filter-input" minlength="5" value="<?php echo $aprendiz_editar['nombre']; ?>" required>
                             </div>
                             <div class="filter-group">
                                 <label class="filter-label">Apellido</label>

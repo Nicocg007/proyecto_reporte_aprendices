@@ -9,40 +9,56 @@
         </button>
     </div>
 
-    <nav class="sidebar-nav">
-        <a href="admin_dashboard.php" class="sidebar-link active">
-            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-            <span>Dashboard</span>
+    <?php
+$paginaActual = basename($_SERVER['PHP_SELF']);
+
+$enlaces = [
+    'admin_dashboard.php' => [
+        'titulo' => 'Dashboard',
+        'icono' => 'layout-dashboard'
+    ],
+    'admin_aprendices.php' => [
+        'titulo' => 'Aprendices',
+        'icono' => 'users'
+    ],
+    'admin_instructores.php' => [
+        'titulo' => 'Instructores',
+        'icono' => 'graduation-cap'
+    ],
+    'admin_fichas.php' => [
+        'titulo' => 'Fichas',
+        'icono' => 'book-open'
+    ],
+    'horario.php' => [
+        'titulo' => 'Horario',
+        'icono' => 'calendar-days'
+    ],
+    'rfid.php' => [
+        'titulo' => 'Registro RFID',
+        'icono' => 'scan-line'
+    ],
+    'reportes.php' => [
+        'titulo' => 'Reportes',
+        'icono' => 'bar-chart-3'
+    ],
+    'admin_excusas.php' => [
+        'titulo' => 'Excusas',
+        'icono' => 'file-text'
+    ]
+];
+?>
+
+<nav class="sidebar-nav">
+    <?php foreach ($enlaces as $archivo => $enlace): ?>
+        <a
+            href="<?php echo htmlspecialchars($archivo); ?>"
+            class="sidebar-link <?php echo $paginaActual === $archivo ? 'active' : ''; ?>"
+        >
+            <i data-lucide="<?php echo htmlspecialchars($enlace['icono']); ?>" class="w-5 h-5"></i>
+            <span><?php echo htmlspecialchars($enlace['titulo']); ?></span>
         </a>
-        <a href="admin_aprendices.php" class="sidebar-link">
-            <i data-lucide="users" class="w-5 h-5"></i>
-            <span>Aprendices</span>
-        </a>
-        <a href="admin_instructores.php" class="sidebar-link">
-            <i data-lucide="graduation-cap" class="w-5 h-5"></i>
-            <span>Instructores</span>
-        </a>
-        <a href="admin_fichas.php" class="sidebar-link">
-            <i data-lucide="book-open" class="w-5 h-5"></i>
-            <span>Fichas</span>
-        </a>
-        <a href="horario.php" class="sidebar-link">
-            <i data-lucide="calendar-days" class="w-5 h-5"></i>
-            <span>Horario</span>
-        </a>
-        <a href="rfid.php" class="sidebar-link">
-            <i data-lucide="scan-line" class="w-5 h-5"></i>
-            <span>Registro RFID</span>
-        </a>
-        <a href="reportes.php" class="sidebar-link">
-            <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
-            <span>Reportes</span>
-        </a>
-        <a href="admin_excusas.php" class="sidebar-link">
-            <i data-lucide="file-text" class="w-5 h-5"></i>
-            <span>Excusas</span>
-        </a>
-    </nav>
+    <?php endforeach; ?>
+</nav>
 
     <div class="sidebar-footer">
         <div class="sidebar-user">
