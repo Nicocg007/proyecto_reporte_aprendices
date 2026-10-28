@@ -77,17 +77,8 @@ DirectoryIndex index.php
 # ------------------------------------------------------------
 # 4. Forzar HTTPS
 # ------------------------------------------------------------
-# ESTE BLOQUINO ESTA DESACTIVADO A PROPOSITO.
-#
-# Razon: si Apache no tiene SSL configurado, activar esto deja
-# la aplicacion INACCESIBLE (el navegador busca https:// y falla).
-# Activalo SOLO cuando ya tengas HTTPS funcionando.
-#
-# Pasos para activarlo:
-#   1. Configura el certificado SSL en el vhost de Apache.
-#   2. Quita los "#" de las lineas de este bloque.
-#   3. Si usas un proxy inverso que termina el TLS, revisa que
-#      envie la cabecera X-Forwarded-Proto.
+# Activo en hosting con certificado. Localhost queda excluido abajo.
+# Hostinger suele enviar X-Forwarded-Proto al terminar TLS en el proxy.
 #
 # HTTPS activo: redirige a https salvo localhost (desarrollo local).
 # Hostinger termina TLS en el proxy y envia X-Forwarded-Proto.
