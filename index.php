@@ -1,6 +1,7 @@
 <?php
 
-session_start();
+require_once __DIR__ . '/model/seguridad_helper.php';
+iniciarSesionSegura();
 
 // Si ya tiene sesion activa, redirigir al dashboard
 if (isset($_SESSION['id_usuario'])) {

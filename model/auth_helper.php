@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/seguridad_helper.php';
 // genera el hash seguro de una contraseña para guardarla en la base
 function hashearPassword($password){
     return password_hash($password, PASSWORD_DEFAULT);
@@ -14,7 +15,7 @@ function verificarPassword($ingresada, $guardada){
 function requiereLogin(){
     // si la sesion no esta inciada la inicia
     if(session_status() === PHP_SESSION_NONE) {
-        session_start();
+        iniciarSesionSegura();
     }
 
     // si no existe id_usuario en la sesion = no esta logueado
@@ -76,7 +77,7 @@ function requiereRoles($roles_permitidos){
 // funcion que devuelve al usuario como un array
 function getUsuarioActual(){
     if(session_status() === PHP_SESSION_NONE){
-        session_start();
+        iniciarSesionSegura();
     }
 
     // si no hay sesio devuelve null
@@ -99,7 +100,7 @@ function getUsuarioActual(){
 // funcion devuelve true si esta logueado, false si no
 function isLoggedIn(){
     if(session_status() === PHP_SESSION_NONE){
-        session_start();
+        iniciarSesionSegura();
     }
     return isset($_SESSION['id_usuario']);
     
@@ -108,7 +109,7 @@ function isLoggedIn(){
 // funcion que devuelve el rol actual
 function getRol(){
     if(session_status() === PHP_SESSION_NONE){
-        session_start();
+        iniciarSesionSegura();
     }
     return $_SESSION['rol'] ?? '';
 }
