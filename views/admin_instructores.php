@@ -202,7 +202,7 @@ if ($modo_editar > 0) {
                             </div>
                             <div class="filter-group">
                                 <label class="filter-label">Contraseña</label>
-                                <input type="text" name="password" class="filter-input" value="123456" required>
+                                <input type="password" name="password" class="filter-input" value="" placeholder="definir contraseña" required>
                             </div>
                             <div class="filter-group">
                                 <label class="filter-label">RFID</label>
