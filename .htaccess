@@ -89,13 +89,15 @@ DirectoryIndex index.php
 #   3. Si usas un proxy inverso que termina el TLS, revisa que
 #      envie la cabecera X-Forwarded-Proto.
 #
-# <IfModule mod_rewrite.c>
-#     RewriteCond %{HTTPS} !=on
-#     RewriteCond %{HTTP:X-Forwarded-Proto} !=https
-#     RewriteCond %{HTTP_HOST} !^localhost
-#     RewriteCond %{HTTP_HOST} !^127\.0\.0\.1
-#     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-# </IfModule>
+# HTTPS activo: redirige a https salvo localhost (desarrollo local).
+# Hostinger termina TLS en el proxy y envia X-Forwarded-Proto.
+<IfModule mod_rewrite.c>
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteCond %{HTTP_HOST} !^localhost
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+</IfModule>
 
 # ------------------------------------------------------------
 # 5. Cache de archivos estaticos
