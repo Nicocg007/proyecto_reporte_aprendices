@@ -49,9 +49,15 @@ if ($accion === 'enviar') {
 
         // extensiones permitidas
         $permitidas = ['pdf', 'jpg', 'jpeg', 'png'];
+        $mimes_permitidos = [
+            'pdf' => ['application/pdf'],
+            'jpg' => ['image/jpeg'],
+            'jpeg' => ['image/jpeg'],
+            'png' => ['image/png'],
+        ];
         $extension = strtolower(pathinfo($_FILES['archivo']['name'], PATHINFO_EXTENSION));
 
-        if (!in_array($extension, $permitidas)) {
+        if (!in_array($extension, $permitidas, true)) {
             header('Location: ../views/aprendiz_excusas.php?error_archivo=1');
             exit();
         }
@@ -62,10 +68,18 @@ if ($accion === 'enviar') {
             exit();
         }
 
+        // validar mime real con finfo (no confiar solo en la extension)
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($_FILES['archivo']['tmp_name']);
+        if (!in_array($mime, $mimes_permitidos[$extension], true)) {
+            header('Location: ../views/aprendiz_excusas.php?error_archivo=1');
+            exit();
+        }
+
         // carpeta donde se guardan los adjuntos
         $carpeta = __DIR__ . '/../uploads/excusas/';
         if (!is_dir($carpeta)) {
-            mkdir($carpeta, 0777, true);
+            mkdir($carpeta, 0755, true);
         }
 
         // nombre unico para no sobrescribir archivos

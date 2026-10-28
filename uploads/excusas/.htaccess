@@ -1,0 +1,28 @@
+# impedir ejecucion de scripts en adjuntos
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
+
+# no listar directorio
+Options -Indexes
+
+# denegar php y similares
+<FilesMatch "\.(?i:php|phtml|php3|php4|php5|php7|php8|phar|pl|py|jsp|asp|aspx|cgi|exe|sh)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# por si el servidor intenta ejecutar php aqui
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>

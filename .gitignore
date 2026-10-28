@@ -5,6 +5,7 @@ public/uploads/*
 # Adjuntos de excusas subidos por los aprendices
 uploads/excusas/*
 !uploads/excusas/.gitkeep
+!uploads/excusas/.htaccess
 
 # Logs y editores
 *.log
