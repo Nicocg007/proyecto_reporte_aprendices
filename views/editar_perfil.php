@@ -59,9 +59,9 @@ if (isset($_POST['enviar_codigo'])) {
         // generar un codigo aleatorio de 6 numeros
         $codigo = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        // guardar el codigo y la contraseña nueva en la sesion
+        // guardar el codigo y el hash de la contraseña nueva (nunca en claro)
         $_SESSION['codigo_cambio'] = $codigo;
-        $_SESSION['password_provisoria'] = $password_nueva;
+        $_SESSION['password_provisoria'] = hashearPassword($password_nueva);
 
         // el codigo vence en 5 minutos, se guarda la hora de vencimiento
         $_SESSION['codigo_expiracion'] = time() + 300;
@@ -93,7 +93,8 @@ if (isset($_POST['cambiar_password'])) {
             $mostrar_error_codigo = 'El código ha expirado. Solicita uno nuevo';
         } else {
             $stmt = $conn->prepare("UPDATE usuario SET password = ? WHERE id_usuario = ?");
-            $stmt->execute([hashearPassword($_SESSION['password_provisoria']), $usuario['id']]);
+            // password_provisoria ya viene hasheada
+            $stmt->execute([$_SESSION['password_provisoria'], $usuario['id']]);
 
             // borrar el codigo y la contraseña temporal de la sesion
             unset($_SESSION['codigo_cambio'], $_SESSION['password_provisoria'], $_SESSION['codigo_expiracion']);
