@@ -74,11 +74,12 @@ function mostrarMensajes() {
 
     // Toast de errores
     const errores = {
-        '1':   ['Usuario no encontrado', 'El numero de documento no esta registrado'],
-        '2':   ['Contraseña incorrecta', 'La contraseña ingresada no es correcta'],
+        '1':   ['Acceso denegado', 'Documento o contraseña incorrectos'],
+        '2':   ['Acceso denegado', 'Documento o contraseña incorrectos'],
         '3':   ['Sesion expirada', 'Tu sesion ha expirado, inicia sesion nuevamente'],
         '4':   ['Campos vacios', 'Por favor completa todos los campos'],
         '6':   ['Usuario inactivo', 'Tu cuenta esta inactiva, contacta al administrador'],
+        '7':   ['Demasiados intentos', 'Espera unos minutos e intenta de nuevo'],
         '500': ['Error del servidor', 'Ocurrio un error inesperado, intenta de nuevo']
     };
 

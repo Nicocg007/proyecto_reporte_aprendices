@@ -12,6 +12,13 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
     $documento = trim($_POST['documento'] ?? '');
     $password = trim($_POST['password'] ?? '');
 
+    // rate limit por ip + documento
+    $clave_rate = 'login_' . ($_SERVER['REMOTE_ADDR'] ?? 'ip') . '_' . $documento;
+    if (rateLimitExcedido($clave_rate, 5, 300)) {
+        header('Location: ../views/login.php?error=7');
+        exit();
+    }
+
     // validar que no esten vacios
     if(empty($documento) || empty($password)){
         header('Location: ../views/login.php?error=4');
@@ -33,14 +40,10 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
     $usuario = $stmt->fetch();
 
     // si no existe el usuario
-    if(!$usuario){
-        header('Location: ../views/login.php?error=1'); // usuario no encontrado
-        exit();
-    }
-    
-    // si la contraseña no coincide
-    if(!verificarPassword($password, $usuario['password'])){
-        header('Location: ../views/login.php?error=2'); // si la contraseña es incorrecta
+    // mensaje unificado: no distinguir usuario inexistente vs password mala
+    if(!$usuario || !verificarPassword($password, $usuario['password'])){
+        rateLimitRegistrarFallo($clave_rate, 5, 300);
+        header('Location: ../views/login.php?error=1');
         exit();
     }
 
@@ -49,6 +52,8 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
         header('Location: ../views/login.php?error=6'); // usuario inactivo
         exit();
     }
+
+    rateLimitLimpiar($clave_rate);
 
     // regenerar id de sesion para evitar fixation
     session_regenerate_id(true);

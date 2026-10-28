@@ -22,33 +22,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // enviar el codigo al correo cuando llega el documento
 if (isset($_POST['enviar_codigo'])) {
     $documento = trim($_POST['documento'] ?? '');
+    $clave_envio = 'reset_envio_' . ($_SERVER['REMOTE_ADDR'] ?? 'ip');
 
-    // buscar el usuario por su numero de documento
-    $stmt = $conn->prepare("SELECT id_usuario, numero_documento, nombre, correo FROM usuario WHERE numero_documento = ?");
-    $stmt->execute([$documento]);
-    $usuario = $stmt->fetch();
-
-    if (!$usuario) {
-        $error = 'No existe un usuario con ese documento';
-    } elseif (empty($usuario['correo'])) {
-        $error = 'El usuario no tiene un correo registrado';
+    if (rateLimitExcedido($clave_envio, 5, 300)) {
+        $error = 'Demasiados intentos. Espera unos minutos e intenta de nuevo';
     } else {
-        // guardar el documento en la sesion para saber a quien cambiarle
-        $_SESSION['reset_documento'] = $documento;
+        rateLimitRegistrarFallo($clave_envio, 5, 300);
 
-        // generar codigo aleatorio de 6 numeros
-        $codigo = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-        $_SESSION['reset_codigo'] = $codigo;
-        $_SESSION['reset_expiracion'] = time() + 300;
+        // buscar el usuario por su numero de documento
+        $stmt = $conn->prepare("SELECT id_usuario, numero_documento, nombre, correo FROM usuario WHERE numero_documento = ?");
+        $stmt->execute([$documento]);
+        $usuario = $stmt->fetch();
 
-        // enviar el codigo con la plantilla html
-        $enviado = enviarCorreo($usuario['correo'], 'Restablecer tu contraseña', mensajeHtml($codigo, $usuario['nombre']));
+        // mensaje generico: no revelar si el documento existe
+        $mensaje_generico = 'Si el documento esta registrado, enviamos un codigo a su correo';
 
-        if ($enviado) {
-            $mostrar_codigo = true;
-            $correo_destino = $usuario['correo'];
+        if ($usuario && !empty($usuario['correo'])) {
+            $_SESSION['reset_documento'] = $documento;
+            $codigo = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $_SESSION['reset_codigo'] = $codigo;
+            $_SESSION['reset_expiracion'] = time() + 300;
+            $enviado = enviarCorreo($usuario['correo'], 'Restablecer tu contraseña', mensajeHtml($codigo, $usuario['nombre']));
+            if ($enviado) {
+                $mostrar_codigo = true;
+                // no mostrar el correo completo; solo confirmar envio
+                $correo_destino = 'tu correo registrado';
+            } else {
+                $error = 'No se pudo enviar el correo. Intenta mas tarde';
+            }
         } else {
-            $error = 'No se pudo enviar el correo. Revisa el config/mail.php';
+            // misma respuesta para no enumerar usuarios
+            $info = $mensaje_generico;
+        }
+
+        if (empty($error) && empty($mostrar_codigo) && empty($info)) {
+            $info = $mensaje_generico;
         }
     }
 }
@@ -59,30 +67,32 @@ if (isset($_POST['cambiar_password'])) {
     $password_nueva = $_POST['password_nueva'] ?? '';
     $password_confirmar = $_POST['password_confirmar'] ?? '';
     $documento = $_SESSION['reset_documento'] ?? '';
+    $clave_codigo = 'reset_codigo_' . ($_SERVER['REMOTE_ADDR'] ?? 'ip') . '_' . $documento;
 
-    // revisar el codigo, la vigencia y la contraseña nueva
-    if ($codigo_ingresado != ($_SESSION['reset_codigo'] ?? '')) {
+    if (rateLimitExcedido($clave_codigo, 5, 300)) {
+        $error_codigo = 'Demasiados intentos. Espera unos minutos e intenta de nuevo';
+        $mostrar_codigo = true;
+    } elseif ($codigo_ingresado != ($_SESSION['reset_codigo'] ?? '')) {
+        rateLimitRegistrarFallo($clave_codigo, 5, 300);
         $error_codigo = 'El código no es correcto. Revisa tu correo';
+        $mostrar_codigo = true;
     } elseif (time() > ($_SESSION['reset_expiracion'] ?? 0)) {
         $error_codigo = 'El código ha expirado. Solicita uno nuevo';
     } elseif ($password_nueva !== $password_confirmar) {
         $error_codigo = 'Las contraseñas no coinciden';
+        $mostrar_codigo = true;
     } elseif (strlen($password_nueva) < 6) {
         $error_codigo = 'La contraseña debe tener al menos 6 caracteres';
+        $mostrar_codigo = true;
     } else {
-        // cambiar la contraseña del usuario del documento guardado
+        rateLimitLimpiar($clave_codigo);
         $stmt = $conn->prepare("UPDATE usuario SET password = ? WHERE numero_documento = ?");
         $stmt->execute([hashearPassword($password_nueva), $documento]);
-
-        // limpiar los datos del reseteo de la sesion
         unset($_SESSION['reset_documento'], $_SESSION['reset_codigo'], $_SESSION['reset_expiracion']);
-
-        // ir al login con mensaje de exito
         header('Location: login.php?reset=1');
         exit();
     }
 
-    // si fallo, mostrar de nuevo el formulario del codigo
     if (!empty($_SESSION['reset_expiracion'])) {
         $mostrar_codigo = true;
     }
@@ -170,7 +180,7 @@ $segundos_restantes = $segundos_restantes > 0 ? $segundos_restantes : 0;
 
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-bold text-slate-800">Verifica tu correo</h2>
-                    <p class="text-slate-500 text-sm mt-1">Te enviamos un codigo de 6 numeros a <?php echo $correo_destino ?? ''; ?></p>
+                    <p class="text-slate-500 text-sm mt-1">Te enviamos un codigo de 6 numeros a <?php echo e($correo_destino ?? ''); ?></p>
                 </div>
 
                 <form method="POST" action="olvidar_contrasena.php" class="space-y-5">
@@ -280,10 +290,13 @@ $segundos_restantes = $segundos_restantes > 0 ? $segundos_restantes : 0;
 
     // mensajes de error cuando se quedan en la pagina
     <?php if (!empty($error)): ?>
-    SenaToast.error('Error', '<?php echo $error; ?>');
+    SenaToast.error('Error', <?php echo json_encode($error, JSON_UNESCAPED_UNICODE); ?>);
     <?php endif; ?>
     <?php if (!empty($error_codigo)): ?>
-    SenaToast.error('Error', '<?php echo $error_codigo; ?>');
+    SenaToast.error('Error', <?php echo json_encode($error_codigo, JSON_UNESCAPED_UNICODE); ?>);
+    <?php endif; ?>
+    <?php if (!empty($info)): ?>
+    SenaToast.info('Listo', <?php echo json_encode($info, JSON_UNESCAPED_UNICODE); ?>);
     <?php endif; ?>
     </script>
 
