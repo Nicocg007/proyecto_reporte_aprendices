@@ -81,7 +81,8 @@ body {
     pointer-events: none;
 }
 
-.input-group input {
+.input-group input,
+.input-group select {
     padding-left: 42px;
 }
 
