@@ -17,3 +17,6 @@ config/database.local.php
 
 # Secretos del entorno (credenciales BD y correo)
 config/env.php
+
+# Dependencias de Node (build de Tailwind)
+node_modules/
