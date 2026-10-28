@@ -3,8 +3,8 @@
    SENA Control - Cerrar Sesion
    ======================================== */
 
-session_start();
-session_destroy();
+require_once __DIR__ . '/model/seguridad_helper.php';
+cerrarSesionSegura();
 
 header('Location: views/login.php?logout=1');
 exit();
