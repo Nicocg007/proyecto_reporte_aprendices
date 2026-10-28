@@ -1,7 +1,7 @@
 <?php
 require_once '../model/auth_helper.php';
 require_once '../model/seguridad_helper.php';
-requiereLogin();
+requiereRoles(['Administrador', 'Instructor', 'Aprendiz']);
 
 // conexion a la base de datos
 require_once '../config/database.php';

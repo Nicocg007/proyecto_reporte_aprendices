@@ -50,6 +50,29 @@ function requiereRol($rol_requerido){
     }
 }
 
+
+// permite varios roles (ej. reportes: admin e instructor y aprendiz con alcance propio)
+function requiereRoles($roles_permitidos){
+    requiereLogin();
+    $rol = $_SESSION['rol'] ?? '';
+    if (!in_array($rol, (array)$roles_permitidos, true)) {
+        $destino = 'login.php';
+        switch ($rol) {
+            case 'Administrador':
+                $destino = 'admin_dashboard.php';
+                break;
+            case 'Instructor':
+                $destino = 'instructor_dashboard.php';
+                break;
+            case 'Aprendiz':
+                $destino = 'aprendiz_dashboard.php';
+                break;
+        }
+        header('Location: ' . $destino);
+        exit();
+    }
+}
+
 // funcion que devuelve al usuario como un array
 function getUsuarioActual(){
     if(session_status() === PHP_SESSION_NONE){
