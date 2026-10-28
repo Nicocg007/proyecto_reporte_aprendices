@@ -151,7 +151,7 @@ $nombre_completo = ($perfil['nombre'] ?? '') . ' ' . ($perfil['apellido'] ?? '')
                             <div class="profile-avatar">
                                 <i data-lucide="user" class="w-10 h-10"></i>
                             </div>
-                            <span class="profile-avatar-name"><?php echo $nombre_completo; ?></span>
+                            <span class="profile-avatar-name"><?php echo e($nombre_completo); ?></span>
                             <span class="profile-avatar-role"><?php echo ucfirst($rol); ?></span>
                             <label class="btn-filter-primary btn-profile-photo" style="cursor:pointer;">
                                 <i data-lucide="camera" class="w-4 h-4"></i>
@@ -165,19 +165,19 @@ $nombre_completo = ($perfil['nombre'] ?? '') . ' ' . ($perfil['apellido'] ?? '')
                             <div class="filter-grid" style="grid-template-columns: repeat(2, 1fr);">
                                 <div class="filter-group">
                                     <label class="filter-label">Numero de Documento</label>
-                                    <input type="text" class="filter-input" value="<?php echo $perfil['numero_documento'] ?? ''; ?>" disabled>
+                                    <input type="text" class="filter-input" value="<?php echo e($perfil['numero_documento'] ?? ''); ?>" disabled>
                                 </div>
                                 <div class="filter-group">
                                     <label class="filter-label">Correo</label>
-                                    <input type="email" name="correo" class="filter-input" value="<?php echo $perfil['correo'] ?? ''; ?>" required>
+                                    <input type="email" name="correo" class="filter-input" value="<?php echo e($perfil['correo'] ?? ''); ?>" required>
                                 </div>
                                 <div class="filter-group">
                                     <label class="filter-label">Nombre</label>
-                                    <input type="text" class="filter-input" value="<?php echo $perfil['nombre'] ?? ''; ?>" disabled>
+                                    <input type="text" class="filter-input" value="<?php echo e($perfil['nombre'] ?? ''); ?>" disabled>
                                 </div>
                                 <div class="filter-group">
                                     <label class="filter-label">Apellido</label>
-                                    <input type="text" class="filter-input" value="<?php echo $perfil['apellido'] ?? ''; ?>" disabled>
+                                    <input type="text" class="filter-input" value="<?php echo e($perfil['apellido'] ?? ''); ?>" disabled>
                                 </div>
                             </div>
 
@@ -234,7 +234,7 @@ $nombre_completo = ($perfil['nombre'] ?? '') . ' ' . ($perfil['apellido'] ?? '')
                     <input type="hidden" name="rol" value="<?php echo e($rol); ?>">
                     <div class="card-body" style="padding: 16px; border: 2px dashed #0d9488; border-radius: 12px;">
                         <h3 class="profile-form-title">Ingresa el código enviado a tu correo</h3>
-                        <p class="text-sm text-slate-500">Revisa <?php echo $perfil['correo'] ?? ''; ?> y escribe el código de 6 números</p>
+                        <p class="text-sm text-slate-500">Revisa <?php echo e($perfil['correo'] ?? ''); ?> y escribe el código de 6 números</p>
                         <div style="display: flex; align-items: center; gap: 12px; margin-top: 12px;">
                             <div class="filter-group" style="max-width: 220px;">
                                 <input type="text" name="codigo" id="inputCodigo" class="filter-input" placeholder="000000" maxlength="6" required style="text-align:center; letter-spacing:8px; font-size:1.4rem;">
@@ -300,10 +300,10 @@ $nombre_completo = ($perfil['nombre'] ?? '') . ' ' . ($perfil['apellido'] ?? '')
     }
     // mensajes de error cuando se quedan en la pagina
     <?php if (!empty($mostrar_error)): ?>
-    SenaToast.error('Error', '<?php echo $mostrar_error; ?>');
+    SenaToast.error('Error', <?php echo json_encode($mostrar_error ?? '', JSON_UNESCAPED_UNICODE); ?>);
     <?php endif; ?>
     <?php if (!empty($mostrar_error_codigo)): ?>
-    SenaToast.error('Error', '<?php echo $mostrar_error_codigo; ?>');
+    SenaToast.error('Error', <?php echo json_encode($mostrar_error_codigo ?? '', JSON_UNESCAPED_UNICODE); ?>);
     <?php endif; ?>
     </script>
 

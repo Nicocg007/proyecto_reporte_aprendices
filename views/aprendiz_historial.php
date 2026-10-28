@@ -55,7 +55,7 @@ $mi_historial = $stmt->fetchAll();
                                     <td><?php echo e($registro['fecha']); ?></td>
                                     <td><?php echo e($registro['entrada']); ?></td>
                                     <td><?php echo e($registro['salida']); ?></td>
-                                    <td><?php echo $registro['retardo'] ?? '0'; ?></td>
+                                    <td><?php echo e($registro['retardo'] ?? '0'); ?></td>
                                     <td><span class="badge-status badge-<?php echo strtolower($registro['estado']); ?>"><?php echo e($registro['estado']); ?></span></td>
                                 </tr>
                             <?php endforeach; ?>

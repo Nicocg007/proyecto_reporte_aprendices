@@ -149,11 +149,11 @@ $url_pagina = 'reportes.php?' . ($query_actual !== '' ? $query_actual . '&' : ''
                     <div class="filter-grid">
                         <div class="filter-group">
                             <label class="filter-label">Fecha Inicio</label>
-                            <input type="date" name="fecha_inicio" class="filter-input" value="<?php echo $_GET['fecha_inicio'] ?? ''; ?>">
+                            <input type="date" name="fecha_inicio" class="filter-input" value="<?php echo e($fecha_inicio); ?>">
                         </div>
                         <div class="filter-group">
                             <label class="filter-label">Fecha Fin</label>
-                            <input type="date" name="fecha_fin" class="filter-input" value="<?php echo $_GET['fecha_fin'] ?? ''; ?>">
+                            <input type="date" name="fecha_fin" class="filter-input" value="<?php echo e($fecha_fin); ?>">
                         </div>
                         <div class="filter-group">
                             <label class="filter-label">Ficha</label>
@@ -161,7 +161,7 @@ $url_pagina = 'reportes.php?' . ($query_actual !== '' ? $query_actual . '&' : ''
                                 <option value="">Todas las fichas</option>
                                 <?php if (!empty($lista_fichas)): ?>
                                     <?php foreach ($lista_fichas as $ficha): ?>
-                                        <option value="<?php echo $ficha['id_ficha']; ?>" <?php echo ($_GET['ficha'] ?? '') == $ficha['id_ficha'] ? 'selected' : ''; ?>>
+                                        <option value="<?php echo e($ficha['id_ficha']); ?>" <?php echo (($_GET['ficha'] ?? '') == $ficha['id_ficha']) ? 'selected' : ''; ?>>
                                             <?php echo e($ficha['codigo_ficha'] . ' - ' . $ficha['nombre_programa']); ?>
                                         </option>
                                     <?php endforeach; ?>
