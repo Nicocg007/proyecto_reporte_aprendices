@@ -14,44 +14,64 @@ marcarInasistencias($conn, date('Y-m-d', strtotime('-1 day')));
 marcarInasistencias($conn, date('Y-m-d'));
 
 // id del instructor logueado (de la sesion)
-$id = $_SESSION['id_usuario'];
+$id = (int)$_SESSION['id_usuario'];
 
 // mis aprendices (los que estan en las fichas que yo dirijo)
-$stmt = $conn->query("SELECT COUNT(DISTINCT uf.id_aprendiz) AS total
+$stmt = $conn->prepare("SELECT COUNT(DISTINCT uf.id_aprendiz) AS total
     FROM usuario_has_ficha uf
     INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
-    WHERE f.id_instructor_encargado = $id");
+    WHERE f.id_instructor_encargado = ?");
+$stmt->execute([$id]);
 $mis_aprendices = $stmt->fetch()['total'];
 
-// asistencias de hoy
-$stmt = $conn->query("SELECT COUNT(*) AS total FROM ingreso WHERE fecha = CURDATE()");
+// asistencias de hoy solo de mis fichas
+$stmt = $conn->prepare("SELECT COUNT(*) AS total
+    FROM ingreso i
+    INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = i.id_aprendiz
+    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
+    WHERE i.fecha = CURDATE() AND f.id_instructor_encargado = ?");
+$stmt->execute([$id]);
 $asistencias_hoy = $stmt->fetch()['total'];
 
-// retardos de hoy
-$stmt = $conn->query("SELECT COUNT(*) AS total FROM ingreso WHERE fecha = CURDATE() AND estado_asistencia = 'Retardo'");
+// retardos de hoy solo de mis fichas
+$stmt = $conn->prepare("SELECT COUNT(*) AS total
+    FROM ingreso i
+    INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = i.id_aprendiz
+    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
+    WHERE i.fecha = CURDATE() AND i.estado_asistencia = 'Retardo' AND f.id_instructor_encargado = ?");
+$stmt->execute([$id]);
 $retardos_hoy = $stmt->fetch()['total'];
 
-// excusas pendientes por revisar
-$stmt = $conn->query("SELECT COUNT(*) AS total FROM excusa WHERE estado = 'Pendiente'");
+// excusas pendientes de aprendices de mis fichas
+$stmt = $conn->prepare("SELECT COUNT(*) AS total
+    FROM excusa e
+    INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = e.id_aprendiz
+    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
+    WHERE e.estado = 'Pendiente' AND f.id_instructor_encargado = ?");
+$stmt->execute([$id]);
 $excusas_pendientes = $stmt->fetch()['total'];
 
 // asistencia de hoy de mis fichas
-$stmt = $conn->query("SELECT u.nombre, f.codigo_ficha AS ficha, i.hora_entrada_registrada AS entrada, i.estado_asistencia AS estado
+$stmt = $conn->prepare("SELECT u.nombre, f.codigo_ficha AS ficha, i.hora_entrada_registrada AS entrada, i.estado_asistencia AS estado
     FROM ingreso i
     INNER JOIN usuario u ON i.id_aprendiz = u.id_usuario
     INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = u.id_usuario
     INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
-    WHERE i.fecha = CURDATE() AND f.id_instructor_encargado = $id
+    WHERE i.fecha = CURDATE() AND f.id_instructor_encargado = ?
     ORDER BY i.hora_entrada_registrada DESC
     LIMIT 8");
+$stmt->execute([$id]);
 $asistencia_hoy = $stmt->fetchAll();
 
-// excusas pendientes por revisar
-$stmt = $conn->query("SELECT u.nombre AS nombre_aprendiz, e.fecha_inasistencia AS fecha, e.observacion AS motivo
+// excusas pendientes por revisar de mis fichas
+$stmt = $conn->prepare("SELECT u.nombre AS nombre_aprendiz, e.fecha_inasistencia AS fecha, e.observacion AS motivo
     FROM excusa e
     INNER JOIN usuario u ON e.id_aprendiz = u.id_usuario
-    WHERE e.estado = 'Pendiente'
+    INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = e.id_aprendiz
+    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
+    WHERE e.estado = 'Pendiente' AND f.id_instructor_encargado = ?
     ORDER BY e.fecha_inasistencia ASC");
+$stmt->execute([$id]);
 $excusas_por_revisar = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
