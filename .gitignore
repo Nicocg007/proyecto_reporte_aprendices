@@ -11,5 +11,8 @@ uploads/excusas/*
 .vscode/
 .idea/
 
-# Configuracion local de la base de datos (cada maquina la suya)
+# Configuracion local de la base de datos (legado)
 config/database.local.php
+
+# Secretos del entorno (credenciales BD y correo)
+config/env.php
