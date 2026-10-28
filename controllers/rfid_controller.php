@@ -3,10 +3,16 @@
 // recibe el uid de la tarjeta por post y marca la entrada o la salida
 
 require_once '../model/auth_helper.php';
+require_once '../model/seguridad_helper.php';
 require_once '../config/database.php';
 
 // solo con sesion activa
 requiereLogin();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verificarCsrf();
+}
+
 
 // solo admin o instructor pueden registrar asistencia
 $rol_actual = getRol();

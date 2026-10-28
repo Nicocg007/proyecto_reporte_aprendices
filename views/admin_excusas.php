@@ -1,5 +1,6 @@
 <?php
 require_once '../model/auth_helper.php';
+require_once '../model/seguridad_helper.php';
 requiereLogin();
 requiereRol('Administrador');
 
@@ -78,6 +79,8 @@ $excusas_revisadas = $stmt->fetchAll();
                                     <td><?php echo $excusa['instructor']; ?></td>
                                     <td>
                                         <form method="POST" action="../controllers/excusa_controller.php" class="flex gap-2">
+                    <?php echo csrfField(); ?>
+
                                             <input type="hidden" name="id_excusa" value="<?php echo $excusa['id']; ?>">
                                             <button type="submit" name="accion" value="aprobar" class="badge-status badge-normal" style="cursor:pointer;border:none;">Aprobar</button>
                                             <button type="submit" name="accion" value="rechazar" class="badge-status badge-inasistencia" style="cursor:pointer;border:none;">Rechazar</button>

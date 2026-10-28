@@ -1,5 +1,6 @@
 <?php
 require_once '../model/auth_helper.php';
+require_once '../model/seguridad_helper.php';
 requiereLogin();
 requiereRol('Instructor');
 
@@ -7,6 +8,10 @@ requiereRol('Instructor');
 require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verificarCsrf();
+}
 
 // id del instructor logueado
 $id = $_SESSION['id_usuario'];
@@ -142,6 +147,8 @@ $asistencia_registrada = $stmt->fetchAll();
             </div>
             <div class="card-body">
                 <form method="POST" action="instructor_asistencia.php">
+                    <?php echo csrfField(); ?>
+
                     <div class="filter-grid" style="grid-template-columns: repeat(3, 1fr);">
                         <div class="filter-group">
                             <label class="filter-label">Ficha</label>
@@ -174,6 +181,8 @@ $asistencia_registrada = $stmt->fetchAll();
             </div>
             <div class="card-body" style="padding: 0;">
                 <form method="POST" action="instructor_asistencia.php">
+                    <?php echo csrfField(); ?>
+
                     <input type="hidden" name="id_ficha" value="<?php echo $ficha_sel['id_ficha']; ?>">
                     <input type="hidden" name="fecha" value="<?php echo $fecha_sel; ?>">
                     <table class="data-table">

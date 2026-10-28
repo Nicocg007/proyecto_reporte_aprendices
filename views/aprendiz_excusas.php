@@ -1,5 +1,6 @@
 <?php
 require_once '../model/auth_helper.php';
+require_once '../model/seguridad_helper.php';
 requiereLogin();
 requiereRol('Aprendiz');
 
@@ -37,6 +38,8 @@ $mis_excusas = $stmt->fetchAll();
             </div>
             <div class="card-body">
                 <form method="POST" action="../controllers/excusa_controller.php" enctype="multipart/form-data">
+                    <?php echo csrfField(); ?>
+
                     <input type="hidden" name="accion" value="enviar">
                     <div class="filter-grid">
                         <div class="filter-group">

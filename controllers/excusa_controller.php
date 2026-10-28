@@ -3,8 +3,14 @@
 // maneja enviar una excusa, aprobarla o rechazarla
 
 require_once '../model/auth_helper.php';
+require_once '../model/seguridad_helper.php';
 require_once '../config/database.php';
 requiereLogin();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verificarCsrf();
+}
+
 
 // rol del usuario que hace la accion
 $rol_actual = getRol();

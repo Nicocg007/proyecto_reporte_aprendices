@@ -2,11 +2,10 @@
 require_once '../config/database.php';
 require_once '../config/mail.php';
 require_once '../model/auth_helper.php';
+require_once '../model/seguridad_helper.php';
 
 // si ya hay sesion activa, no hace falta recuperar contraseña
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+iniciarSesionSegura();
 if (isset($_SESSION['id_usuario'])) {
     header('Location: login.php');
     exit();
@@ -15,6 +14,10 @@ if (isset($_SESSION['id_usuario'])) {
 // conexion a la base de datos
 $db = new Database();
 $conn = $db->getConnection();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verificarCsrf();
+}
 
 // enviar el codigo al correo cuando llega el documento
 if (isset($_POST['enviar_codigo'])) {
@@ -144,6 +147,8 @@ $segundos_restantes = $segundos_restantes > 0 ? $segundos_restantes : 0;
                 </div>
 
                 <form method="POST" action="olvidar_contrasena.php" class="space-y-5">
+                    <?php echo csrfField(); ?>
+
                     <div class="input-group">
                         <i data-lucide="user" class="icon-input w-5 h-5"></i>
                         <input
@@ -169,6 +174,8 @@ $segundos_restantes = $segundos_restantes > 0 ? $segundos_restantes : 0;
                 </div>
 
                 <form method="POST" action="olvidar_contrasena.php" class="space-y-5">
+                    <?php echo csrfField(); ?>
+
                     <div class="input-group">
                         <i data-lucide="shield" class="icon-input w-5 h-5"></i>
                         <input

@@ -1,5 +1,6 @@
 <?php
 require_once '../model/auth_helper.php';
+require_once '../model/seguridad_helper.php';
 require_once '../config/database.php';
 require_once '../config/mail.php';
 requiereLogin();
@@ -13,6 +14,10 @@ $usuario = getUsuarioActual();
 // conexion a la base de datos
 $db = new Database();
 $conn = $db->getConnection();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verificarCsrf();
+}
 
 // datos reales del usuario logueado
 $stmt = $conn->prepare("SELECT numero_documento, nombre, apellido, correo FROM usuario WHERE id_usuario = ?");
@@ -132,6 +137,8 @@ $nombre_completo = ($perfil['nombre'] ?? '') . ' ' . ($perfil['apellido'] ?? '')
             </div>
             <div class="card-body">
                 <form method="POST" action="editar_perfil.php">
+                    <?php echo csrfField(); ?>
+
                     <input type="hidden" name="rol" value="<?php echo $rol; ?>">
                     <input type="hidden" name="guardar_perfil" value="1">
                     <div class="profile-layout">
@@ -189,6 +196,8 @@ $nombre_completo = ($perfil['nombre'] ?? '') . ' ' . ($perfil['apellido'] ?? '')
             </div>
             <div class="card-body">
                 <form method="POST" action="editar_perfil.php">
+                    <?php echo csrfField(); ?>
+
                     <input type="hidden" name="rol" value="<?php echo $rol; ?>">
                     <div class="filter-grid" style="grid-template-columns: repeat(3, 1fr);">
                         <div class="filter-group">
@@ -216,6 +225,8 @@ $nombre_completo = ($perfil['nombre'] ?? '') . ' ' . ($perfil['apellido'] ?? '')
                 <?php if (!empty($mostrar_codigo)): ?>
                 <?php $segundos_restantes = (int)($_SESSION['codigo_expiracion'] - time()); ?>
                 <form method="POST" action="editar_perfil.php" style="margin-top: 20px;">
+                    <?php echo csrfField(); ?>
+
                     <input type="hidden" name="rol" value="<?php echo $rol; ?>">
                     <div class="card-body" style="padding: 16px; border: 2px dashed #0d9488; border-radius: 12px;">
                         <h3 class="profile-form-title">Ingresa el código enviado a tu correo</h3>

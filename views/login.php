@@ -1,3 +1,7 @@
+<?php
+require_once '../model/seguridad_helper.php';
+iniciarSesionSegura();
+?>
 <!DOCTYPE html>
 <html lang="es" data-theme="wireframe">
 <head>
@@ -60,6 +64,8 @@
 
                 
                 <form id="loginForm" class="space-y-5" method="POST" action="../controllers/auth_controller.php">
+                    <?php echo csrfField(); ?>
+
 
                     
                     <div class="input-group">

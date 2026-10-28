@@ -1,5 +1,6 @@
 <?php
 require_once '../model/auth_helper.php';
+require_once '../model/seguridad_helper.php';
 requiereLogin();
 requiereRol('Administrador');
 
@@ -7,6 +8,10 @@ requiereRol('Administrador');
 require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verificarCsrf();
+}
 
 // lista de instructores activos para el formulario
 $stmt = $conn->query("SELECT id_usuario, nombre, apellido FROM usuario
@@ -84,6 +89,8 @@ $lista_fichas_completa = $stmt->fetchAll();
                 </div>
                 <div class="card-body">
                     <form method="POST" action="admin_fichas.php">
+                    <?php echo csrfField(); ?>
+
                         <div class="filter-grid" style="grid-template-columns: repeat(3, 1fr);">
                             <div class="filter-group">
                                 <label class="filter-label">Codigo de Ficha</label>

@@ -1,5 +1,6 @@
 <?php
 require_once '../model/auth_helper.php';
+require_once '../model/seguridad_helper.php';
 require_once '../config/database.php';
 requiereLogin();
 
@@ -87,6 +88,8 @@ if ($error === '1') {
                 <p class="text-slate-400 text-sm">La tarjeta se lee sola al apoyarla, el sistema registra la entrada y la salida</p>
 
                 <form method="POST" action="../controllers/rfid_controller.php" id="rfidForm" style="margin-top: 18px;">
+                    <?php echo csrfField(); ?>
+
                     <input
                         type="text"
                         name="uid"

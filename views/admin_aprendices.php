@@ -1,5 +1,6 @@
 <?php
 require_once '../model/auth_helper.php';
+require_once '../model/seguridad_helper.php';
 requiereLogin();
 requiereRol('Administrador');
 
@@ -7,6 +8,10 @@ requiereRol('Administrador');
 require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verificarCsrf();
+}
 
 // lista de fichas para el filtro
 $stmt = $conn->query("SELECT id_ficha, codigo_ficha FROM ficha ORDER BY codigo_ficha");
@@ -241,6 +246,8 @@ if ($modo_editar > 0) {
                 </div>
                 <div class="card-body">
                     <form method="POST" action="admin_aprendices.php">
+                    <?php echo csrfField(); ?>
+
                         <input type="hidden" name="editar_aprendiz" value="1">
                         <input type="hidden" name="id_aprendiz" value="<?php echo $aprendiz_editar['id_usuario']; ?>">
                         <div class="filter-grid" style="grid-template-columns: repeat(3, 1fr);">
@@ -302,6 +309,8 @@ if ($modo_editar > 0) {
                 </div>
                 <div class="card-body">
                     <form method="POST" action="admin_aprendices.php">
+                    <?php echo csrfField(); ?>
+
                         <div class="filter-grid" style="grid-template-columns: repeat(3, 1fr);">
                             <div class="filter-group">
                                 <label class="filter-label">Numero de Documento</label>

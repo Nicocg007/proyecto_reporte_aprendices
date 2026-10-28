@@ -1,4 +1,5 @@
 <?php
+require_once '../model/seguridad_helper.php';
 // marca las inasistencias del dia. se puede correr por consola o desde el navegador como admin
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../model/asistencia_helper.php';
@@ -8,6 +9,11 @@ $es_cli = (php_sapi_name() === 'cli');
 if (!$es_cli) {
     require_once __DIR__ . '/../model/auth_helper.php';
     requiereLogin();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verificarCsrf();
+}
+
     requiereRol('Administrador');
 }
 

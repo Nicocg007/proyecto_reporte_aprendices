@@ -7,6 +7,7 @@ iniciarSesionSegura();
 
 // Por post
 if($_SERVER['REQUEST_METHOD'] === 'POST'){
+    verificarCsrf();
     // leer los datos enviados
     $documento = trim($_POST['documento'] ?? '');
     $password = trim($_POST['password'] ?? '');
