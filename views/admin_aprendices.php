@@ -118,7 +118,7 @@ $buscar = $_GET['buscar'] ?? '';
 $ficha = $_GET['ficha'] ?? '';
 $estado = $_GET['estado'] ?? '';
 
-// lista de aprendices con su ficha
+// lista de aprendices con su ficha (consultas preparadas)
 $sql = "SELECT u.id_usuario AS id, u.numero_documento AS documento, CONCAT(u.nombre, ' ', u.apellido) AS nombre, u.correo,
     f.codigo_ficha AS ficha, uf.id_ficha AS id_ficha, u.rfid_uid AS rfid, u.estado
     FROM usuario u
@@ -126,20 +126,25 @@ $sql = "SELECT u.id_usuario AS id, u.numero_documento AS documento, CONCAT(u.nom
     LEFT JOIN ficha f ON f.id_ficha = uf.id_ficha
     WHERE u.id_rol = 3";
 
+$params = [];
 // filtro por nombre o documento
 if ($buscar != '') {
-    $sql .= " AND (u.numero_documento LIKE '%$buscar%' OR u.nombre LIKE '%$buscar%')";
+    $sql .= " AND (u.numero_documento LIKE :buscar OR u.nombre LIKE :buscar)";
+    $params[':buscar'] = '%' . $buscar . '%';
 }
 // filtro por ficha
 if ($ficha != '') {
-    $sql .= " AND uf.id_ficha = $ficha";
+    $sql .= " AND uf.id_ficha = :ficha";
+    $params[':ficha'] = (int)$ficha;
 }
-// filtro por estado
-if ($estado != '') {
-    $sql .= " AND u.estado = '$estado'";
+// filtro por estado (solo valores del enum)
+if ($estado != '' && in_array($estado, ['Activo', 'Inactivo'], true)) {
+    $sql .= " AND u.estado = :estado";
+    $params[':estado'] = $estado;
 }
 $sql .= " ORDER BY u.nombre";
-$stmt = $conn->query($sql);
+$stmt = $conn->prepare($sql);
+$stmt->execute($params);
 $lista_aprendices = $stmt->fetchAll();
 
 // aprendiz que se va a editar, si llega el id por la url
