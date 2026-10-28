@@ -1,5 +1,6 @@
 <?php
 require_once '../model/auth_helper.php';
+require_once '../model/seguridad_helper.php';
 requiereLogin();
 requiereRol('Aprendiz');
 
@@ -51,11 +52,11 @@ $mi_historial = $stmt->fetchAll();
                         <?php if (!empty($mi_historial)): ?>
                             <?php foreach ($mi_historial as $registro): ?>
                                 <tr>
-                                    <td><?php echo $registro['fecha']; ?></td>
-                                    <td><?php echo $registro['entrada']; ?></td>
-                                    <td><?php echo $registro['salida']; ?></td>
+                                    <td><?php echo e($registro['fecha']); ?></td>
+                                    <td><?php echo e($registro['entrada']); ?></td>
+                                    <td><?php echo e($registro['salida']); ?></td>
                                     <td><?php echo $registro['retardo'] ?? '0'; ?></td>
-                                    <td><span class="badge-status badge-<?php echo strtolower($registro['estado']); ?>"><?php echo $registro['estado']; ?></span></td>
+                                    <td><span class="badge-status badge-<?php echo strtolower($registro['estado']); ?>"><?php echo e($registro['estado']); ?></span></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>

@@ -6,7 +6,11 @@ require_once '../config/mail.php';
 requiereLogin();
 
 // rol para elegir sidebar y navbar, viene de la url o del formulario
+$roles_ui = ['admin', 'instructor', 'aprendiz'];
 $rol = $_POST['rol'] ?? $_GET['rol'] ?? 'admin';
+if (!in_array($rol, $roles_ui, true)) {
+    $rol = 'admin';
+}
 
 // el usuario logueado segun la sesion
 $usuario = getUsuarioActual();
@@ -29,7 +33,7 @@ if (isset($_POST['guardar_perfil'])) {
     $correo_nuevo = $_POST['correo'];
     $stmt = $conn->prepare("UPDATE usuario SET correo = ? WHERE id_usuario = ?");
     $stmt->execute([$correo_nuevo, $usuario['id']]);
-    header('Location: editar_perfil.php?rol=' . $rol . '&perfil=1');
+    header('Location: editar_perfil.php?rol=' . urlencode($rol) . '&perfil=1');
     exit();
 }
 
@@ -94,7 +98,7 @@ if (isset($_POST['cambiar_password'])) {
             // borrar el codigo y la contraseña temporal de la sesion
             unset($_SESSION['codigo_cambio'], $_SESSION['password_provisoria'], $_SESSION['codigo_expiracion']);
 
-            header('Location: editar_perfil.php?rol=' . $rol . '&password=1');
+            header('Location: editar_perfil.php?rol=' . urlencode($rol) . '&password=1');
             exit();
         }
     } else {
@@ -139,7 +143,7 @@ $nombre_completo = ($perfil['nombre'] ?? '') . ' ' . ($perfil['apellido'] ?? '')
                 <form method="POST" action="editar_perfil.php">
                     <?php echo csrfField(); ?>
 
-                    <input type="hidden" name="rol" value="<?php echo $rol; ?>">
+                    <input type="hidden" name="rol" value="<?php echo e($rol); ?>">
                     <input type="hidden" name="guardar_perfil" value="1">
                     <div class="profile-layout">
 
@@ -198,7 +202,7 @@ $nombre_completo = ($perfil['nombre'] ?? '') . ' ' . ($perfil['apellido'] ?? '')
                 <form method="POST" action="editar_perfil.php">
                     <?php echo csrfField(); ?>
 
-                    <input type="hidden" name="rol" value="<?php echo $rol; ?>">
+                    <input type="hidden" name="rol" value="<?php echo e($rol); ?>">
                     <div class="filter-grid" style="grid-template-columns: repeat(3, 1fr);">
                         <div class="filter-group">
                             <label class="filter-label">Contraseña Actual</label>
@@ -227,7 +231,7 @@ $nombre_completo = ($perfil['nombre'] ?? '') . ' ' . ($perfil['apellido'] ?? '')
                 <form method="POST" action="editar_perfil.php" style="margin-top: 20px;">
                     <?php echo csrfField(); ?>
 
-                    <input type="hidden" name="rol" value="<?php echo $rol; ?>">
+                    <input type="hidden" name="rol" value="<?php echo e($rol); ?>">
                     <div class="card-body" style="padding: 16px; border: 2px dashed #0d9488; border-radius: 12px;">
                         <h3 class="profile-form-title">Ingresa el código enviado a tu correo</h3>
                         <p class="text-sm text-slate-500">Revisa <?php echo $perfil['correo'] ?? ''; ?> y escribe el código de 6 números</p>

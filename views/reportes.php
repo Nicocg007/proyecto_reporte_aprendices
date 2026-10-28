@@ -162,7 +162,7 @@ $url_pagina = 'reportes.php?' . ($query_actual !== '' ? $query_actual . '&' : ''
                                 <?php if (!empty($lista_fichas)): ?>
                                     <?php foreach ($lista_fichas as $ficha): ?>
                                         <option value="<?php echo $ficha['id_ficha']; ?>" <?php echo ($_GET['ficha'] ?? '') == $ficha['id_ficha'] ? 'selected' : ''; ?>>
-                                            <?php echo $ficha['codigo_ficha'] . ' - ' . $ficha['nombre_programa']; ?>
+                                            <?php echo e($ficha['codigo_ficha'] . ' - ' . $ficha['nombre_programa']); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -267,14 +267,14 @@ $url_pagina = 'reportes.php?' . ($query_actual !== '' ? $query_actual . '&' : ''
                         <?php if (!empty($reporte_asistencias)): ?>
                             <?php foreach ($reporte_asistencias as $registro): ?>
                                 <tr>
-                                    <td class="font-medium"><?php echo $registro['nombre']; ?></td>
-                                    <td><?php echo $registro['documento']; ?></td>
-                                    <td><?php echo $registro['ficha']; ?></td>
-                                    <td><?php echo $registro['fecha']; ?></td>
-                                    <td><?php echo $registro['entrada']; ?></td>
-                                    <td><?php echo $registro['salida']; ?></td>
-                                    <td><?php echo $registro['retardo']; ?></td>
-                                    <td><span class="badge-status badge-<?php echo strtolower($registro['estado']); ?>"><?php echo $registro['estado']; ?></span></td>
+                                    <td class="font-medium"><?php echo e($registro['nombre']); ?></td>
+                                    <td><?php echo e($registro['documento']); ?></td>
+                                    <td><?php echo e($registro['ficha']); ?></td>
+                                    <td><?php echo e($registro['fecha']); ?></td>
+                                    <td><?php echo e($registro['entrada']); ?></td>
+                                    <td><?php echo e($registro['salida']); ?></td>
+                                    <td><?php echo e($registro['retardo']); ?></td>
+                                    <td><span class="badge-status badge-<?php echo strtolower($registro['estado']); ?>"><?php echo e($registro['estado']); ?></span></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
