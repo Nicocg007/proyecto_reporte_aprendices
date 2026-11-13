@@ -5,6 +5,7 @@
 require_once '../model/auth_helper.php';
 require_once '../model/seguridad_helper.php';
 require_once '../config/database.php';
+require_once '../vendor/autoload.php';
 
 // solo con sesion activa
 requiereLogin();
@@ -35,11 +36,9 @@ $db = new Database();
 $conn = $db->getConnection();
 
 // buscar al aprendiz por el uid de la tarjeta
-$stmt = $conn->prepare("SELECT u.id_usuario, u.nombre, u.apellido, u.estado
-    FROM usuario u
-    WHERE u.rfid_uid = ?");
-$stmt->execute([$uid]);
-$aprendiz = $stmt->fetch();
+$attendanceRepository = new \App\Repository\AttendanceRepository($conn);
+$attendanceService = new \App\Service\AttendanceService();
+$aprendiz = $attendanceRepository->findByRfid($uid);
 
 // la tarjeta no esta registrada en el sistema
 if (!$aprendiz) {
@@ -54,20 +53,10 @@ if ($aprendiz['estado'] !== 'Activo') {
 }
 
 // la ficha del aprendiz para conocer la hora de entrada y de salida
-$stmt = $conn->prepare("SELECT f.hora_entrada, f.hora_salida
-    FROM usuario_has_ficha uf
-    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
-    WHERE uf.id_aprendiz = ?
-    LIMIT 1");
-$stmt->execute([$aprendiz['id_usuario']]);
-$ficha = $stmt->fetch();
+$ficha = $attendanceRepository->findScheduleForLearner((int) $aprendiz['id_usuario']);
 
 // registro de asistencia de hoy del aprendiz
-$stmt = $conn->prepare("SELECT id_ingreso, hora_entrada_registrada, hora_salida_registrada, estado_asistencia
-    FROM ingreso
-    WHERE id_aprendiz = ? AND fecha = CURDATE()");
-$stmt->execute([$aprendiz['id_usuario']]);
-$registro = $stmt->fetch();
+$registro = $attendanceRepository->findForToday((int) $aprendiz['id_usuario']);
 
 // nombre completo del aprendiz para el mensaje
 $nombre_completo = $aprendiz['nombre'] . ' ' . $aprendiz['apellido'];
@@ -80,27 +69,17 @@ $ahora = date('H:i:s');
 if (!$registro || $registro['hora_entrada_registrada'] === null) {
     // comparar la hora actual con la hora de entrada de la ficha
     $hora_entrada = $ficha['hora_entrada'] ?? null;
-    $estado_asistencia = 'Normal';
-    $minutos_retardo = 0;
-
-    if ($hora_entrada !== null && $ahora > $hora_entrada) {
-        $estado_asistencia = 'Retardo';
-        $minutos_retardo = (int)round((strtotime($ahora) - strtotime($hora_entrada)) / 60);
-    }
-
-    if ($registro) {
-        // se completa el registro que ya existia sin entrada
-        $stmt = $conn->prepare("UPDATE ingreso
-            SET hora_entrada_registrada = ?, minutos_retardo = ?, estado_asistencia = ?
-            WHERE id_ingreso = ?");
-        $stmt->execute([$ahora, $minutos_retardo, $estado_asistencia, $registro['id_ingreso']]);
-    } else {
-        // guardar el ingreso nuevo en la base
-        $stmt = $conn->prepare("INSERT INTO ingreso
-            (id_aprendiz, fecha, hora_entrada_registrada, minutos_retardo, estado_asistencia)
-            VALUES (?, CURDATE(), ?, ?, ?)");
-        $stmt->execute([$aprendiz['id_usuario'], $ahora, $minutos_retardo, $estado_asistencia]);
-    }
+    $resultadoEntrada = $attendanceService->calculateCheckIn($ahora, $hora_entrada);
+    $estado_asistencia = $resultadoEntrada['estado'];
+    $minutos_retardo = $resultadoEntrada['minutos_retardo'];
+    $attendanceRepository->saveCheckIn(
+        (int) $aprendiz['id_usuario'],
+        null,
+        $ahora,
+        $minutos_retardo,
+        $estado_asistencia,
+        $registro ? (int) $registro['id_ingreso'] : null
+    );
 
     header('Location: ../views/rfid.php?ok=1&nombre=' . urlencode($nombre_completo) . '&estado=' . $estado_asistencia . '&retardo=' . $minutos_retardo . '&hora=' . $ahora);
     exit();
@@ -119,10 +98,12 @@ if ($registro['hora_salida_registrada'] === null) {
         $salida_temprana = 1;
     }
 
-    $stmt = $conn->prepare("UPDATE ingreso
-        SET hora_salida_registrada = ?, salida_temprana = ?, estado_asistencia = ?
-        WHERE id_ingreso = ?");
-    $stmt->execute([$ahora, $salida_temprana, $estado_asistencia, $registro['id_ingreso']]);
+    $attendanceRepository->saveCheckOut(
+        (int) $registro['id_ingreso'],
+        $ahora,
+        $salida_temprana,
+        $estado_asistencia
+    );
 
     header('Location: ../views/rfid.php?ok=2&nombre=' . urlencode($nombre_completo) . '&hora=' . $ahora . '&temprana=' . $salida_temprana);
     exit();

@@ -9,37 +9,11 @@ require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
 
-// id del instructor logueado
-$id = $_SESSION['id_usuario'];
-
-// cantidad de excusas pendientes de mis fichas
-$stmt = $conn->query("SELECT COUNT(*) AS total FROM excusa e
-    INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = e.id_aprendiz
-    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
-    WHERE f.id_instructor_encargado = $id AND e.estado = 'Pendiente'");
-$excusas_pendientes = $stmt->fetch()['total'];
-
-// excusas pendientes de mis fichas
-$stmt = $conn->query("SELECT e.id_excusa AS id, CONCAT(u.nombre, ' ', u.apellido) AS nombre_aprendiz, e.fecha_inasistencia AS fecha,
-    e.observacion AS motivo, e.archivo_adjunto
-    FROM excusa e
-    INNER JOIN usuario u ON u.id_usuario = e.id_aprendiz
-    INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = u.id_usuario
-    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
-    WHERE f.id_instructor_encargado = $id AND e.estado = 'Pendiente'
-    ORDER BY e.fecha_inasistencia ASC");
-$excusas_por_revisar = $stmt->fetchAll();
-
-// excusas revisadas de mis fichas
-$stmt = $conn->query("SELECT CONCAT(u.nombre, ' ', u.apellido) AS nombre_aprendiz, e.fecha_inasistencia AS fecha,
-    e.observacion AS motivo, e.estado, e.archivo_adjunto, e.fecha_revision
-    FROM excusa e
-    INNER JOIN usuario u ON u.id_usuario = e.id_aprendiz
-    INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = u.id_usuario
-    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
-    WHERE f.id_instructor_encargado = $id AND e.estado <> 'Pendiente'
-    ORDER BY e.fecha_revision DESC");
-$excusas_revisadas = $stmt->fetchAll();
+$excuseLists = (new \App\Repository\ExcuseRepository($conn))
+    ->findInstructorLists((int) $_SESSION['id_usuario']);
+$excusas_pendientes = $excuseLists['pending_count'];
+$excusas_por_revisar = $excuseLists['pending'];
+$excusas_revisadas = $excuseLists['reviewed'];
 ?>
 <!DOCTYPE html>
 <html lang="es">

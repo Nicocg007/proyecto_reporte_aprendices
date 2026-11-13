@@ -13,6 +13,8 @@ if (!in_array($rol_actual, ['Administrador', 'Instructor', 'Aprendiz'])) {
 require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
+$scheduleRepository = new \App\Repository\ScheduleRepository($conn);
+$scheduleService = new \App\Service\ScheduleService();
 
 // el instructor solo ve sus propias clases
 $filtro_instructor = null;
@@ -23,23 +25,10 @@ if ($rol_actual === 'Instructor') {
 // el aprendiz solo ve el horario de su ficha
 $ficha_aprendiz = null;
 if ($rol_actual === 'Aprendiz') {
-    $stmt = $conn->prepare("SELECT f.id_ficha
-        FROM usuario_has_ficha uf
-        INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
-        WHERE uf.id_aprendiz = ?
-        ORDER BY f.codigo_ficha LIMIT 1");
-    $stmt->execute([$_SESSION['id_usuario']]);
-    $fila = $stmt->fetch();
-    if ($fila) {
-        $ficha_aprendiz = (int)$fila['id_ficha'];
-    }
+    $ficha_aprendiz = $scheduleRepository->findLearnerFichaId((int) $_SESSION['id_usuario']);
 }
 
-// fichas que tienen horario cargado
-$fichas = $conn->query("SELECT DISTINCT f.id_ficha, f.codigo_ficha, f.nombre_programa
-    FROM ficha f
-    INNER JOIN horario h ON h.id_ficha = f.id_ficha
-    ORDER BY f.codigo_ficha")->fetchAll();
+$fichas = $scheduleRepository->findFichasWithSchedule();
 
 // ficha seleccionada
 if ($rol_actual === 'Aprendiz') {
@@ -59,21 +48,8 @@ $fecha_min = null;
 $fecha_max = null;
 
 if ($id_ficha > 0) {
-    $stmt = $conn->prepare("SELECT id_ficha, codigo_ficha, nombre_programa, hora_entrada, hora_salida
-        FROM ficha WHERE id_ficha = ?");
-    $stmt->execute([$id_ficha]);
-    $ficha_actual = $stmt->fetch();
-
-    $sql_rango = "SELECT MIN(hora_inicio) AS hi, MAX(hora_fin) AS hf, MIN(fecha) AS fi, MAX(fecha) AS ff
-        FROM horario WHERE id_ficha = ?";
-    $params_rango = [$id_ficha];
-    if ($filtro_instructor !== null) {
-        $sql_rango .= " AND (instructor LIKE ? OR es_festivo = 1)";
-        $params_rango[] = $filtro_instructor . '%';
-    }
-    $stmt = $conn->prepare($sql_rango);
-    $stmt->execute($params_rango);
-    $rango = $stmt->fetch();
+    $ficha_actual = $scheduleRepository->findFicha($id_ficha);
+    $rango = $scheduleRepository->findRange($id_ficha, $filtro_instructor);
     if (!empty($rango['hi'])) {
         $hora_min = $rango['hi'];
         $hora_max = $rango['hf'];
@@ -82,75 +58,28 @@ if ($id_ficha > 0) {
     $fecha_max = $rango['ff'];
 }
 
-// lunes de la semana a mostrar
-$ini = $_GET['ini'] ?? '';
-if ($ini !== '') {
-    $lunes = new DateTime($ini);
-} elseif ($fecha_min) {
-    $lunes = new DateTime($fecha_min);
-} else {
-    $lunes = new DateTime('monday this week');
-}
-$lunes->modify('monday this week');
-$sabado = (clone $lunes)->modify('+5 days');
-
-// si hay semanas antes o despues
-$hay_prev = $fecha_min && $lunes->format('Y-m-d') > $fecha_min;
-$hay_next = $fecha_max && $sabado->format('Y-m-d') < $fecha_max;
-
-// armar el mapa de la semana: [dia][hora] y dias festivos
-$mapa = [];
-$festivos = [];
-if ($ficha_actual) {
-    $sql = "SELECT fecha, hora_inicio, instructor, competencia, es_festivo
-        FROM horario
-        WHERE id_ficha = ? AND fecha BETWEEN ? AND ?";
-    $params = [$id_ficha, $lunes->format('Y-m-d'), $sabado->format('Y-m-d')];
-    if ($filtro_instructor !== null) {
-        $sql .= " AND (instructor LIKE ? OR es_festivo = 1)";
-        $params[] = $filtro_instructor . '%';
-    }
-    $sql .= " ORDER BY fecha, hora_inicio";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute($params);
-    foreach ($stmt->fetchAll() as $fila) {
-        $dia = (int)date('N', strtotime($fila['fecha'])) - 1; // 0 lunes ... 5 sabado
-        if ($dia < 0 || $dia > 5) {
-            continue;
-        }
-        if ((int)$fila['es_festivo'] === 1) {
-            $festivos[$dia] = true;
-            continue;
-        }
-        $mapa[$dia][substr($fila['hora_inicio'], 0, 5)] = $fila;
-    }
-}
-
-// horas del grid de una en una
-$horas = [];
-$t = strtotime($hora_min);
-$fin = strtotime($hora_max);
-while ($t < $fin) {
-    $horas[] = date('H:i', $t);
-    $t = strtotime('+1 hour', $t);
-}
+$week = $scheduleService->buildWeek($_GET['ini'] ?? '', $fecha_min, $fecha_max);
+$lunes = $week['monday'];
+$sabado = $week['saturday'];
+$hay_prev = $week['has_previous'];
+$hay_next = $week['has_next'];
+$weekRows = $ficha_actual
+    ? $scheduleRepository->findWeekRows(
+        $id_ficha,
+        $lunes->format('Y-m-d'),
+        $sabado->format('Y-m-d'),
+        $filtro_instructor
+    )
+    : [];
+$grid = $scheduleService->buildGrid($weekRows, $hora_min, $hora_max);
+$mapa = $grid['map'];
+$festivos = $grid['holidays'];
+$horas = $grid['hours'];
+$instructores_semana = $grid['instructors'];
 
 $nombres_dias = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
 
-// color estable por instructor para ver el flujo
 $paleta = ['#e0f2fe', '#dcfce7', '#fef9c3', '#fee2e2', '#f3e8ff', '#ffedd5', '#ccfbf1', '#e2e8f0'];
-function color_instructor($nombre, $paleta) {
-    return $paleta[crc32($nombre) % count($paleta)];
-}
-
-// instructores de la semana para la convencion
-$instructores_semana = [];
-foreach ($mapa as $por_hora) {
-    foreach ($por_hora as $fila) {
-        $instructores_semana[$fila['instructor']] = true;
-    }
-}
-ksort($instructores_semana);
 
 // navbar y sidebar segun el rol
 if ($rol_actual === 'Administrador') {
@@ -263,7 +192,7 @@ if ($rol_actual === 'Administrador') {
                                                 <td class="horario-festivo">Festivo</td>
                                             <?php elseif (isset($mapa[$d][$hora])): ?>
                                                 <?php $clase = $mapa[$d][$hora]; ?>
-                                                <td style="background: <?php echo color_instructor($clase['instructor'], $paleta); ?>;">
+                                                <td style="background: <?php echo $scheduleService->colorForInstructor($clase['instructor'], $paleta); ?>;">
                                                     <div class="horario-inst"><?php echo htmlspecialchars($clase['instructor']); ?></div>
                                                     <?php if (!empty($clase['competencia'])): ?>
                                                         <div class="horario-comp"><?php echo htmlspecialchars($clase['competencia']); ?></div>
@@ -282,7 +211,7 @@ if ($rol_actual === 'Administrador') {
                     <?php if (!empty($instructores_semana)): ?>
                         <div class="horario-leyenda">
                             <?php foreach (array_keys($instructores_semana) as $nombre_instructor): ?>
-                                <span style="background: <?php echo color_instructor($nombre_instructor, $paleta); ?>;">
+                                <span style="background: <?php echo $scheduleService->colorForInstructor($nombre_instructor, $paleta); ?>;">
                                     <?php echo htmlspecialchars($nombre_instructor); ?>
                                 </span>
                             <?php endforeach; ?>

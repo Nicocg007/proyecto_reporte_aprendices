@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/env_loader.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 // clase database para crear la conexion con mysql
 class Database {

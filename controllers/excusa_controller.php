@@ -5,6 +5,7 @@
 require_once '../model/auth_helper.php';
 require_once '../model/seguridad_helper.php';
 require_once '../config/database.php';
+require_once '../vendor/autoload.php';
 requiereLogin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -19,6 +20,8 @@ $id_usuario = $_SESSION['id_usuario'];
 // conexion a la base de datos
 $db = new Database();
 $conn = $db->getConnection();
+$excuseRepository = new \App\Repository\ExcuseRepository($conn);
+$excuseService = new \App\Service\ExcuseService();
 
 // accion que llega por post
 $accion = $_POST['accion'] ?? '';
@@ -36,7 +39,7 @@ if ($accion === 'enviar') {
     $motivo = trim($_POST['motivo'] ?? '');
 
     // la fecha y el motivo son obligatorios
-    if ($fecha === '' || $motivo === '') {
+    if ($excuseService->validateSubmission($fecha, $motivo) !== null) {
         header('Location: ../views/aprendiz_excusas.php?error_campos=1');
         exit();
     }
@@ -47,31 +50,19 @@ if ($accion === 'enviar') {
     // si llego un archivo se valida y se guarda
     if (isset($_FILES['archivo']) && $_FILES['archivo']['error'] === UPLOAD_ERR_OK) {
 
-        // extensiones permitidas
-        $permitidas = ['pdf', 'jpg', 'jpeg', 'png'];
-        $mimes_permitidos = [
-            'pdf' => ['application/pdf'],
-            'jpg' => ['image/jpeg'],
-            'jpeg' => ['image/jpeg'],
-            'png' => ['image/png'],
-        ];
         $extension = strtolower(pathinfo($_FILES['archivo']['name'], PATHINFO_EXTENSION));
-
-        if (!in_array($extension, $permitidas, true)) {
-            header('Location: ../views/aprendiz_excusas.php?error_archivo=1');
-            exit();
-        }
-
-        // tamano maximo de 5 megas
-        if ($_FILES['archivo']['size'] > 5 * 1024 * 1024) {
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($_FILES['archivo']['tmp_name']);
+        $uploadError = $excuseService->validateAttachment(
+            $extension,
+            (int) $_FILES['archivo']['size'],
+            (string) $mime
+        );
+        if ($uploadError === 'tamano') {
             header('Location: ../views/aprendiz_excusas.php?error_tamano=1');
             exit();
         }
-
-        // validar mime real con finfo (no confiar solo en la extension)
-        $finfo = new finfo(FILEINFO_MIME_TYPE);
-        $mime = $finfo->file($_FILES['archivo']['tmp_name']);
-        if (!in_array($mime, $mimes_permitidos[$extension], true)) {
+        if ($uploadError !== null) {
             header('Location: ../views/aprendiz_excusas.php?error_archivo=1');
             exit();
         }
@@ -95,10 +86,7 @@ if ($accion === 'enviar') {
     }
 
     // se guarda la excusa en estado pendiente
-    $stmt = $conn->prepare("INSERT INTO excusa
-        (id_aprendiz, fecha_inasistencia, archivo_adjunto, observacion, estado)
-        VALUES (?, ?, ?, ?, 'Pendiente')");
-    $stmt->execute([$id_usuario, $fecha, $archivo_guardado, $motivo]);
+    $excuseRepository->create((int) $id_usuario, $fecha, $archivo_guardado, $motivo);
 
     header('Location: ../views/aprendiz_excusas.php?enviada=1');
     exit();
@@ -124,12 +112,7 @@ if ($accion === 'aprobar' || $accion === 'rechazar') {
 
     // el instructor solo revisa excusas de sus propias fichas
     if ($rol_actual === 'Instructor') {
-        $stmt = $conn->prepare("SELECT COUNT(*) AS total FROM excusa e
-            INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = e.id_aprendiz
-            INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
-            WHERE e.id_excusa = ? AND f.id_instructor_encargado = ?");
-        $stmt->execute([$id_excusa, $id_usuario]);
-        if ($stmt->fetch()['total'] == 0) {
+        if (!$excuseRepository->canInstructorReview($id_excusa, (int) $id_usuario)) {
             header('Location: ' . $redirigir . '?error=1');
             exit();
         }
@@ -139,39 +122,9 @@ if ($accion === 'aprobar' || $accion === 'rechazar') {
     $nuevo_estado = $accion === 'aprobar' ? 'Aprobada' : 'Rechazada';
 
     // solo se revisa si sigue pendiente
-    $stmt = $conn->prepare("UPDATE excusa
-        SET estado = ?, id_instructor_revisor = ?, fecha_revision = NOW()
-        WHERE id_excusa = ? AND estado = 'Pendiente'");
-    $stmt->execute([$nuevo_estado, $id_usuario, $id_excusa]);
-
-    // si no se cambio nada la excusa ya habia sido revisada
-    if ($stmt->rowCount() === 0) {
+    if (!$excuseRepository->review($id_excusa, (int) $id_usuario, $nuevo_estado)) {
         header('Location: ' . $redirigir . '?error=1');
         exit();
-    }
-
-    // al aprobar se corrige el ingreso de ese dia si existe
-    if ($accion === 'aprobar') {
-        $stmt = $conn->prepare("SELECT id_aprendiz, fecha_inasistencia FROM excusa WHERE id_excusa = ?");
-        $stmt->execute([$id_excusa]);
-        $excusa = $stmt->fetch();
-
-        if ($excusa) {
-            $stmt = $conn->prepare("SELECT id_ingreso FROM ingreso WHERE id_aprendiz = ? AND fecha = ?");
-            $stmt->execute([$excusa['id_aprendiz'], $excusa['fecha_inasistencia']]);
-            $ingreso = $stmt->fetch();
-
-            // si hay un ingreso ese dia se vuelve normal y sin retardo
-            if ($ingreso) {
-                $stmt = $conn->prepare("UPDATE ingreso
-                    SET estado_asistencia = 'Normal', minutos_retardo = 0
-                    WHERE id_ingreso = ?");
-                $stmt->execute([$ingreso['id_ingreso']]);
-
-                $stmt = $conn->prepare("UPDATE excusa SET id_ingreso = ? WHERE id_excusa = ?");
-                $stmt->execute([$ingreso['id_ingreso'], $id_excusa]);
-            }
-        }
     }
 
     // mensaje segun lo que se hizo

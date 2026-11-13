@@ -18,21 +18,20 @@ $usuario = getUsuarioActual();
 // conexion a la base de datos
 $db = new Database();
 $conn = $db->getConnection();
+$userRepository = new \App\Repository\UserRepository($conn);
+$passwordChangeService = new \App\Service\PasswordChangeService();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verificarCsrf();
 }
 
 // datos reales del usuario logueado
-$stmt = $conn->prepare("SELECT numero_documento, nombre, apellido, correo FROM usuario WHERE id_usuario = ?");
-$stmt->execute([$usuario['id']]);
-$perfil = $stmt->fetch();
+$perfil = $userRepository->findProfile((int) $usuario['id']);
 
 // guardar el correo cuando llega el formulario del perfil
 if (isset($_POST['guardar_perfil'])) {
     $correo_nuevo = $_POST['correo'];
-    $stmt = $conn->prepare("UPDATE usuario SET correo = ? WHERE id_usuario = ?");
-    $stmt->execute([$correo_nuevo, $usuario['id']]);
+    $userRepository->updateEmail((int) $usuario['id'], $correo_nuevo);
     header('Location: editar_perfil.php?rol=' . urlencode($rol) . '&perfil=1');
     exit();
 }
@@ -44,16 +43,17 @@ if (isset($_POST['enviar_codigo'])) {
     $password_confirmar = $_POST['password_confirmar'];
 
     // traer la contraseña guardada en la base
-    $stmt = $conn->prepare("SELECT password FROM usuario WHERE id_usuario = ?");
-    $stmt->execute([$usuario['id']]);
-    $fila = $stmt->fetch();
+    $passwordHash = $userRepository->findPasswordHash((int) $usuario['id']);
 
     // revisar que la contraseña actual sea correcta
-    if (!verificarPassword($password_actual, $fila['password'])) {
+    if (!$passwordChangeService->isCurrentPasswordValid($password_actual, $passwordHash)) {
         $mostrar_error = 'La contraseña actual no es correcta';
-    } elseif ($password_nueva !== $password_confirmar) {
+    } elseif (($passwordError = $passwordChangeService->validatePasswordPair(
+        $password_nueva,
+        $password_confirmar
+    )) === 'mismatch') {
         $mostrar_error = 'La nueva contraseña y la confirmación no coinciden';
-    } elseif (strlen($password_nueva) < 6) {
+    } elseif ($passwordError === 'short') {
         $mostrar_error = 'La contraseña debe tener al menos 6 caracteres';
     } else {
         // generar un codigo aleatorio de 6 numeros
@@ -87,23 +87,21 @@ if (isset($_POST['cambiar_password'])) {
     $codigo_ingresado = $_POST['codigo'] ?? '';
 
     // comparar el codigo ingresado con el que se envio
-    if ($codigo_ingresado == ($_SESSION['codigo_cambio'] ?? '')) {
-        // revisar que el codigo no haya vencido
-        if (time() > ($_SESSION['codigo_expiracion'] ?? 0)) {
-            $mostrar_error_codigo = 'El código ha expirado. Solicita uno nuevo';
-        } else {
-            $stmt = $conn->prepare("UPDATE usuario SET password = ? WHERE id_usuario = ?");
-            // password_provisoria ya viene hasheada
-            $stmt->execute([$_SESSION['password_provisoria'], $usuario['id']]);
-
-            // borrar el codigo y la contraseña temporal de la sesion
-            unset($_SESSION['codigo_cambio'], $_SESSION['password_provisoria'], $_SESSION['codigo_expiracion']);
-
-            header('Location: editar_perfil.php?rol=' . urlencode($rol) . '&password=1');
-            exit();
-        }
-    } else {
+    $codeError = $passwordChangeService->validateCode(
+        $codigo_ingresado,
+        (string) ($_SESSION['codigo_cambio'] ?? ''),
+        (int) ($_SESSION['codigo_expiracion'] ?? 0),
+        time()
+    );
+    if ($codeError === 'invalid') {
         $mostrar_error_codigo = 'El código no es correcto. Revisa tu correo';
+    } elseif ($codeError === 'expired') {
+        $mostrar_error_codigo = 'El código ha expirado. Solicita uno nuevo';
+    } else {
+        $userRepository->updatePassword((int) $usuario['id'], $_SESSION['password_provisoria']);
+        unset($_SESSION['codigo_cambio'], $_SESSION['password_provisoria'], $_SESSION['codigo_expiracion']);
+        header('Location: editar_perfil.php?rol=' . urlencode($rol) . '&password=1');
+        exit();
     }
 }
 
@@ -228,7 +226,7 @@ $nombre_completo = ($perfil['nombre'] ?? '') . ' ' . ($perfil['apellido'] ?? '')
                 </form>
 
                 <?php if (!empty($mostrar_codigo)): ?>
-                <?php $segundos_restantes = (int)($_SESSION['codigo_expiracion'] - time()); ?>
+                <?php $segundos_restantes = $passwordChangeService->secondsRemaining((int) $_SESSION['codigo_expiracion'], time()); ?>
                 <form method="POST" action="editar_perfil.php" style="margin-top: 20px;">
                     <?php echo csrfField(); ?>
 

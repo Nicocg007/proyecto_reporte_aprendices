@@ -8,58 +8,40 @@ requiereRol('Administrador');
 require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
+$fichaRepository = new \App\Repository\FichaRepository($conn);
+$fichaService = new \App\Service\FichaService();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verificarCsrf();
 }
 
-// lista de instructores activos para el formulario
-$stmt = $conn->query("SELECT id_usuario, nombre, apellido FROM usuario
-    WHERE id_rol = 2 AND estado = 'Activo'
-    ORDER BY nombre");
-$lista_instructores = $stmt->fetchAll();
+$lista_instructores = $fichaRepository->findActiveInstructors();
 
 // insertar una nueva ficha cuando llega el formulario
 if (isset($_POST['codigo_ficha'])) {
-    // datos del formulario
-    $codigo_ficha = trim($_POST['codigo_ficha']);
-    $nombre_programa = trim($_POST['nombre_programa']);
-    $hora_entrada = $_POST['hora_entrada'] ?? '';
-    $hora_salida = $_POST['hora_salida'] ?? '';
-    $id_instructor = $_POST['id_instructor'] ?? '';
+    $ficha = [
+        'codigo_ficha' => trim($_POST['codigo_ficha']),
+        'nombre_programa' => trim($_POST['nombre_programa']),
+        'hora_entrada' => $_POST['hora_entrada'] ?? '',
+        'hora_salida' => $_POST['hora_salida'] ?? '',
+        'id_instructor' => $_POST['id_instructor'] ?? '',
+    ];
 
-    // todos los campos son obligatorios
-    if ($codigo_ficha === '' || $nombre_programa === '' || $hora_entrada === '' || $hora_salida === '' || $id_instructor === '') {
+    if (!$fichaService->validateCreation($ficha)) {
         header('Location: admin_fichas.php?faltan=1');
         exit();
     }
 
-    // guardar la ficha en la base de datos
     try {
-        $stmt = $conn->prepare("INSERT INTO ficha
-            (codigo_ficha, nombre_programa, hora_entrada, hora_salida, id_instructor_encargado)
-            VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute([$codigo_ficha, $nombre_programa, $hora_entrada, $hora_salida, $id_instructor]);
-
-        // redirigir a la misma pagina con mensaje de exito
+        $fichaRepository->create($ficha);
         header('Location: admin_fichas.php?creada=1');
         exit();
     } catch (Exception $e) {
-        // si el codigo ya existe se muestra el error sin romper la pagina
         $duplicada = true;
     }
 }
 
-// lista de fichas con instructor y cantidad de aprendices
-$stmt = $conn->query("SELECT f.codigo_ficha, f.nombre_programa, f.hora_entrada, f.hora_salida,
-    CONCAT(u.nombre, ' ', u.apellido) AS instructor,
-    COUNT(uf.id_aprendiz) AS total_aprendices
-    FROM ficha f
-    INNER JOIN usuario u ON u.id_usuario = f.id_instructor_encargado
-    LEFT JOIN usuario_has_ficha uf ON uf.id_ficha = f.id_ficha
-    GROUP BY f.id_ficha
-    ORDER BY f.codigo_ficha");
-$lista_fichas_completa = $stmt->fetchAll();
+$lista_fichas_completa = $fichaRepository->findAllWithLearnerCounts();
 ?>
 <!DOCTYPE html>
 <html lang="es">

@@ -1,13 +1,14 @@
 <?php
 require_once __DIR__ . '/seguridad_helper.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 // genera el hash seguro de una contraseña para guardarla en la base
 function hashearPassword($password){
-    return password_hash($password, PASSWORD_DEFAULT);
+    return (new \App\Service\PasswordService())->hash($password);
 }
 
 // revisa si una contraseña coincide con el hash guardado
 function verificarPassword($ingresada, $guardada){
-    return password_verify($ingresada, $guardada);
+    return (new \App\Service\PasswordService())->verify($ingresada, $guardada);
 }
 
 // funcion que verifica que el usuario este logueado
@@ -34,18 +35,8 @@ function requiereRol($rol_requerido){
     if(($_SESSION['rol'] ?? '') !== $rol_requerido){
         // si esta logueado con otro rol lo llevo a su propio panel
         // asi no parece que se le cerro la sesion
-        $destino = 'login.php';
-        switch ($_SESSION['rol'] ?? '') {
-            case 'Administrador':
-                $destino = 'admin_dashboard.php';
-                break;
-            case 'Instructor':
-                $destino = 'instructor_dashboard.php';
-                break;
-            case 'Aprendiz':
-                $destino = 'aprendiz_dashboard.php';
-                break;
-        }
+        $destino = (new \App\Service\AuthService())
+            ->dashboardForRole($_SESSION['rol'] ?? '');
         header('Location: ' . $destino);
         exit();
     }
@@ -57,18 +48,7 @@ function requiereRoles($roles_permitidos){
     requiereLogin();
     $rol = $_SESSION['rol'] ?? '';
     if (!in_array($rol, (array)$roles_permitidos, true)) {
-        $destino = 'login.php';
-        switch ($rol) {
-            case 'Administrador':
-                $destino = 'admin_dashboard.php';
-                break;
-            case 'Instructor':
-                $destino = 'instructor_dashboard.php';
-                break;
-            case 'Aprendiz':
-                $destino = 'aprendiz_dashboard.php';
-                break;
-        }
+        $destino = (new \App\Service\AuthService())->dashboardForRole($rol);
         header('Location: ' . $destino);
         exit();
     }
@@ -81,20 +61,7 @@ function getUsuarioActual(){
     }
 
     // si no hay sesio devuelve null
-    if(!isset($_SESSION['id_usuario'])) {
-        return null;
-    }
-
-    // devuelve los datos del usuario guardados en la sesion
-    return [
-        'id'       => $_SESSION['id_usuario'],
-        'documento'=> $_SESSION['numero_documento'] ?? '',
-        'nombre'   => $_SESSION['nombre'] ?? '',
-        'apellido' => $_SESSION['apellido'] ?? '',
-        'correo'   => $_SESSION['correo'] ?? '',
-        'rol'      => $_SESSION['rol'] ?? '',
-        'id_rol'   => $_SESSION['id_rol'] ?? 0
-    ];
+    return (new \App\Service\AuthService())->userSummary($_SESSION);
 }
 
 // funcion devuelve true si esta logueado, false si no
@@ -102,7 +69,7 @@ function isLoggedIn(){
     if(session_status() === PHP_SESSION_NONE){
         iniciarSesionSegura();
     }
-    return isset($_SESSION['id_usuario']);
+    return (new \App\Service\AuthService())->isAuthenticated($_SESSION);
     
 }
 

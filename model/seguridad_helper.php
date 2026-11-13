@@ -1,5 +1,6 @@
 <?php
 // helpers de seguridad: sesion, csrf, escape y rate limit
+require_once __DIR__ . '/../vendor/autoload.php';
 
 // inicia la sesion con cookies endurecidas (httponly, samesite, secure si https)
 function iniciarSesionSegura() {
@@ -24,7 +25,7 @@ function iniciarSesionSegura() {
 
 // escapa texto para html
 function e($valor) {
-    return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
+    return (new \App\Service\SecurityService())->escape($valor);
 }
 
 // token csrf de la sesion
@@ -43,11 +44,11 @@ function csrfField() {
 }
 
 // valida el token csrf del post; corta si falla
-function verificarCsrf() {
+function verificarCsrf(?string $enviado = null) {
     iniciarSesionSegura();
-    $enviado = $_POST['csrf_token'] ?? '';
+    $enviado = $enviado ?? ($_POST['csrf_token'] ?? '');
     $esperado = $_SESSION['csrf_token'] ?? '';
-    if ($enviado === '' || $esperado === '' || !hash_equals($esperado, $enviado)) {
+    if (!(new \App\Service\SecurityService())->isValidCsrfToken($esperado, $enviado)) {
         http_response_code(403);
         die('Solicitud no valida.');
     }
@@ -60,11 +61,8 @@ function rateLimitExcedido($clave, $max = 5, $segundos = 300) {
     if (!isset($_SESSION['rate_limit'])) {
         $_SESSION['rate_limit'] = [];
     }
-    $dato = $_SESSION['rate_limit'][$clave] ?? ['intentos' => 0, 'bloqueado_hasta' => 0];
-    if ($dato['bloqueado_hasta'] > $ahora) {
-        return true;
-    }
-    return false;
+    $dato = $_SESSION['rate_limit'][$clave] ?? [];
+    return (new \App\Service\SecurityService())->isRateLimited($dato, $ahora);
 }
 
 function rateLimitRegistrarFallo($clave, $max = 5, $segundos = 300) {
@@ -73,16 +71,9 @@ function rateLimitRegistrarFallo($clave, $max = 5, $segundos = 300) {
     if (!isset($_SESSION['rate_limit'])) {
         $_SESSION['rate_limit'] = [];
     }
-    $dato = $_SESSION['rate_limit'][$clave] ?? ['intentos' => 0, 'bloqueado_hasta' => 0];
-    if ($dato['bloqueado_hasta'] > $ahora) {
-        return;
-    }
-    $dato['intentos']++;
-    if ($dato['intentos'] >= $max) {
-        $dato['bloqueado_hasta'] = $ahora + $segundos;
-        $dato['intentos'] = 0;
-    }
-    $_SESSION['rate_limit'][$clave] = $dato;
+    $dato = $_SESSION['rate_limit'][$clave] ?? [];
+    $_SESSION['rate_limit'][$clave] = (new \App\Service\SecurityService())
+        ->registerFailure($dato, $ahora, $max, $segundos);
 }
 
 function rateLimitLimpiar($clave) {

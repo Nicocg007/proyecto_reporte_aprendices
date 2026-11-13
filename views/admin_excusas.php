@@ -4,33 +4,14 @@ require_once '../model/seguridad_helper.php';
 requiereLogin();
 requiereRol('Administrador');
 
-// conexion a la base de datos
 require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
 
-// cantidad de excusas pendientes
-$stmt = $conn->query("SELECT COUNT(*) AS total FROM excusa WHERE estado = 'Pendiente'");
-$excusas_pendientes = $stmt->fetch()['total'];
-
-// excusas pendientes con aprendiz e instructor
-$stmt = $conn->query("SELECT e.id_excusa AS id, CONCAT(u.nombre, ' ', u.apellido) AS nombre_aprendiz, e.fecha_inasistencia AS fecha,
-    e.observacion AS motivo, e.archivo_adjunto, CONCAT(ui.nombre, ' ', ui.apellido) AS instructor
-    FROM excusa e
-    INNER JOIN usuario u ON u.id_usuario = e.id_aprendiz
-    LEFT JOIN usuario ui ON ui.id_usuario = e.id_instructor_revisor
-    WHERE e.estado = 'Pendiente'
-    ORDER BY e.fecha_inasistencia ASC");
-$excusas_por_revisar = $stmt->fetchAll();
-
-// excusas ya revisadas
-$stmt = $conn->query("SELECT CONCAT(u.nombre, ' ', u.apellido) AS nombre_aprendiz, e.fecha_inasistencia AS fecha,
-    e.observacion AS motivo, e.estado, e.archivo_adjunto, e.fecha_revision
-    FROM excusa e
-    INNER JOIN usuario u ON u.id_usuario = e.id_aprendiz
-    WHERE e.estado <> 'Pendiente'
-    ORDER BY e.fecha_revision DESC");
-$excusas_revisadas = $stmt->fetchAll();
+$excuseLists = (new \App\Repository\ExcuseRepository($conn))->findAdminLists();
+$excusas_pendientes = $excuseLists['pending_count'];
+$excusas_por_revisar = $excuseLists['pending'];
+$excusas_revisadas = $excuseLists['reviewed'];
 ?>
 <!DOCTYPE html>
 <html lang="es">

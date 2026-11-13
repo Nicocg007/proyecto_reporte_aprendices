@@ -15,46 +15,11 @@ if ($rol_actual !== 'Administrador' && $rol_actual !== 'Instructor') {
 $db = new Database();
 $conn = $db->getConnection();
 
-// registros de asistencia de hoy para la tabla
-$stmt = $conn->query("SELECT CONCAT(u.nombre, ' ', u.apellido) AS nombre,
-    i.hora_entrada_registrada AS entrada, i.hora_salida_registrada AS salida, i.minutos_retardo AS retardo, i.estado_asistencia AS estado
-    FROM ingreso i
-    INNER JOIN usuario u ON u.id_usuario = i.id_aprendiz
-    WHERE i.fecha = CURDATE()
-    ORDER BY i.hora_entrada_registrada DESC");
-$registros_hoy = $stmt->fetchAll();
+$registros_hoy = (new \App\Repository\AttendanceRepository($conn))->findTodayAttendance();
 
-// mensajes que llegan por la url cuando se registra una tarjeta
-$ok = $_GET['ok'] ?? '';
-$error = $_GET['error'] ?? '';
-$nombre = $_GET['nombre'] ?? '';
-
-if ($ok === '1') {
-    $mensaje_ok = [
-        'tipo' => 'entrada',
-        'nombre' => $nombre,
-        'estado' => $_GET['estado'] ?? 'Normal',
-        'retardo' => $_GET['retardo'] ?? '0',
-        'hora' => $_GET['hora'] ?? ''
-    ];
-}
-
-if ($ok === '2') {
-    $mensaje_ok = [
-        'tipo' => 'salida',
-        'nombre' => $nombre,
-        'hora' => $_GET['hora'] ?? '',
-        'temprana' => $_GET['temprana'] ?? '0'
-    ];
-}
-
-if ($error === '1') {
-    $mensaje_error = 'La tarjeta no esta registrada en el sistema';
-} elseif ($error === '2') {
-    $mensaje_error = $nombre . ' no se encuentra activo';
-} elseif ($error === '4') {
-    $mensaje_error = $nombre . ' ya completo su entrada y salida hoy';
-}
+$feedback = (new \App\Service\AttendanceService())->rfidFeedback($_GET);
+$mensaje_ok = $feedback['success'];
+$mensaje_error = $feedback['error'];
 ?>
 <!DOCTYPE html>
 <html lang="es">

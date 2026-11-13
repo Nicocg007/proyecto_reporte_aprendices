@@ -8,6 +8,7 @@ requiereRol('Administrador');
 require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
+$userRepository = new \App\Repository\UserRepository($conn);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verificarCsrf();
@@ -15,29 +16,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // editar un instructor existente (solo admin)
 if (isset($_POST['editar_instructor'])) {
-    $id_instructor = $_POST['id_instructor'] ?? '';
-    $numero_documento = trim($_POST['documento'] ?? '');
-    $nombre = trim($_POST['nombre'] ?? '');
-    $apellido = trim($_POST['apellido'] ?? '');
-    $correo = trim($_POST['correo'] ?? '');
-    $password = $_POST['password'] ?? '';
+    $instructor = [
+        'id' => $_POST['id_instructor'] ?? '',
+        'documento' => trim($_POST['documento'] ?? ''),
+        'nombre' => trim($_POST['nombre'] ?? ''),
+        'apellido' => trim($_POST['apellido'] ?? ''),
+        'correo' => trim($_POST['correo'] ?? ''),
+        'password' => $_POST['password'] ?? '',
+        'estado' => $_POST['estado'] ?? 'Activo',
+    ];
     $rfid = trim($_POST['rfid'] ?? '');
-    $rfid = $rfid !== '' ? $rfid : null;
-    $estado = $_POST['estado'] ?? 'Activo';
+    $instructor['rfid'] = $rfid !== '' ? $rfid : null;
 
     try {
-        // actualizar los datos del instructor
-        $stmt = $conn->prepare("UPDATE usuario
-            SET numero_documento = ?, nombre = ?, apellido = ?, correo = ?, rfid_uid = ?, estado = ?
-            WHERE id_usuario = ? AND id_rol = 2");
-        $stmt->execute([$numero_documento, $nombre, $apellido, $correo, $rfid, $estado, $id_instructor]);
-
-        // cambiar la contraseña solo si se escribio una nueva
-        if ($password !== '') {
-            $stmt = $conn->prepare("UPDATE usuario SET password = ? WHERE id_usuario = ?");
-            $stmt->execute([hashearPassword($password), $id_instructor]);
-        }
-
+        $userRepository->updateInstructor(
+            $instructor,
+            $instructor['password'] !== '' ? hashearPassword($instructor['password']) : null
+        );
         header('Location: admin_instructores.php?editado=1');
         exit();
     } catch (Exception $e) {
@@ -52,21 +47,18 @@ if (isset($_POST['editar_instructor'])) {
 
 // insertar un nuevo instructor cuando llega el formulario
 if (isset($_POST['documento']) && empty($_POST['id_instructor'])) {
-    $numero_documento = trim($_POST['documento']);
-    $nombre = trim($_POST['nombre']);
-    $apellido = trim($_POST['apellido']);
-    $correo = trim($_POST['correo'] ?? '');
+    $instructor = [
+        'documento' => trim($_POST['documento']),
+        'nombre' => trim($_POST['nombre']),
+        'apellido' => trim($_POST['apellido']),
+        'correo' => trim($_POST['correo'] ?? ''),
+    ];
     $password = $_POST['password'];
     $rfid = trim($_POST['rfid'] ?? '');
-    $rfid = $rfid !== '' ? $rfid : null;
+    $instructor['rfid'] = $rfid !== '' ? $rfid : null;
 
-    // guardar el instructor con rol 2
     try {
-        $stmt = $conn->prepare("INSERT INTO usuario
-            (numero_documento, nombre, apellido, correo, password, rfid_uid, id_rol, estado)
-            VALUES (?, ?, ?, ?, ?, ?, 2, 'Activo')");
-        $stmt->execute([$numero_documento, $nombre, $apellido, $correo, hashearPassword($password), $rfid]);
-
+        $userRepository->createInstructor($instructor, hashearPassword($password));
         header('Location: admin_instructores.php?agregado=1');
         exit();
     } catch (Exception $e) {
@@ -79,19 +71,13 @@ if (isset($_POST['documento']) && empty($_POST['id_instructor'])) {
     }
 }
 
-// lista de instructores
-$stmt = $conn->query("SELECT id_usuario AS id, numero_documento, nombre, apellido, correo, rfid_uid, estado
-    FROM usuario WHERE id_rol = 2 ORDER BY nombre");
-$lista_instructores = $stmt->fetchAll();
+$lista_instructores = $userRepository->findInstructors();
 
 // instructor que se va a editar, si llega el id por la url
 $modo_editar = isset($_GET['editar']) ? (int)$_GET['editar'] : 0;
 $instructor_editar = null;
 if ($modo_editar > 0) {
-    $stmt = $conn->prepare("SELECT id_usuario, numero_documento, nombre, apellido, correo, rfid_uid, estado
-        FROM usuario WHERE id_usuario = ? AND id_rol = 2");
-    $stmt->execute([$modo_editar]);
-    $instructor_editar = $stmt->fetch();
+    $instructor_editar = $userRepository->findInstructor($modo_editar);
 }
 ?>
 <!DOCTYPE html>

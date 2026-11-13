@@ -9,15 +9,8 @@ require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
 
-// id del aprendiz logueado
-$id = $_SESSION['id_usuario'];
-
-// excusas enviadas por el aprendiz
-$stmt = $conn->query("SELECT fecha_inasistencia AS fecha, observacion AS motivo, estado, archivo_adjunto, fecha_revision
-    FROM excusa
-    WHERE id_aprendiz = $id
-    ORDER BY fecha_inasistencia DESC");
-$mis_excusas = $stmt->fetchAll();
+$mis_excusas = (new \App\Repository\ExcuseRepository($conn))
+    ->findLearnerExcuses((int) $_SESSION['id_usuario']);
 ?>
 <!DOCTYPE html>
 <html lang="es">

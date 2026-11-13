@@ -14,6 +14,8 @@ if (isset($_SESSION['id_usuario'])) {
 // conexion a la base de datos
 $db = new Database();
 $conn = $db->getConnection();
+$userRepository = new \App\Repository\UserRepository($conn);
+$passwordChangeService = new \App\Service\PasswordChangeService();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verificarCsrf();
@@ -30,9 +32,7 @@ if (isset($_POST['enviar_codigo'])) {
         rateLimitRegistrarFallo($clave_envio, 5, 300);
 
         // buscar el usuario por su numero de documento
-        $stmt = $conn->prepare("SELECT id_usuario, numero_documento, nombre, correo FROM usuario WHERE numero_documento = ?");
-        $stmt->execute([$documento]);
-        $usuario = $stmt->fetch();
+        $usuario = $userRepository->findByDocument($documento);
 
         // mensaje generico: no revelar si el documento existe
         $mensaje_generico = 'Si el documento esta registrado, enviamos un codigo a su correo';
@@ -72,25 +72,38 @@ if (isset($_POST['cambiar_password'])) {
     if (rateLimitExcedido($clave_codigo, 5, 300)) {
         $error_codigo = 'Demasiados intentos. Espera unos minutos e intenta de nuevo';
         $mostrar_codigo = true;
-    } elseif ($codigo_ingresado != ($_SESSION['reset_codigo'] ?? '')) {
-        rateLimitRegistrarFallo($clave_codigo, 5, 300);
-        $error_codigo = 'El código no es correcto. Revisa tu correo';
-        $mostrar_codigo = true;
-    } elseif (time() > ($_SESSION['reset_expiracion'] ?? 0)) {
-        $error_codigo = 'El código ha expirado. Solicita uno nuevo';
-    } elseif ($password_nueva !== $password_confirmar) {
-        $error_codigo = 'Las contraseñas no coinciden';
-        $mostrar_codigo = true;
-    } elseif (strlen($password_nueva) < 6) {
-        $error_codigo = 'La contraseña debe tener al menos 6 caracteres';
-        $mostrar_codigo = true;
     } else {
-        rateLimitLimpiar($clave_codigo);
-        $stmt = $conn->prepare("UPDATE usuario SET password = ? WHERE numero_documento = ?");
-        $stmt->execute([hashearPassword($password_nueva), $documento]);
-        unset($_SESSION['reset_documento'], $_SESSION['reset_codigo'], $_SESSION['reset_expiracion']);
-        header('Location: login.php?reset=1');
-        exit();
+        $codeError = $passwordChangeService->validateCode(
+            (string) $codigo_ingresado,
+            (string) ($_SESSION['reset_codigo'] ?? ''),
+            (int) ($_SESSION['reset_expiracion'] ?? 0),
+            time()
+        );
+        if ($codeError === 'invalid') {
+            rateLimitRegistrarFallo($clave_codigo, 5, 300);
+            $error_codigo = 'El código no es correcto. Revisa tu correo';
+            $mostrar_codigo = true;
+        } elseif ($codeError === 'expired') {
+            $error_codigo = 'El código ha expirado. Solicita uno nuevo';
+        } else {
+            $passwordError = $passwordChangeService->validatePasswordPair(
+                $password_nueva,
+                $password_confirmar
+            );
+            if ($passwordError === 'mismatch') {
+                $error_codigo = 'Las contraseñas no coinciden';
+                $mostrar_codigo = true;
+            } elseif ($passwordError === 'short') {
+                $error_codigo = 'La contraseña debe tener al menos 6 caracteres';
+                $mostrar_codigo = true;
+            } else {
+                rateLimitLimpiar($clave_codigo);
+                $userRepository->updatePasswordByDocument($documento, hashearPassword($password_nueva));
+                unset($_SESSION['reset_documento'], $_SESSION['reset_codigo'], $_SESSION['reset_expiracion']);
+                header('Location: login.php?reset=1');
+                exit();
+            }
+        }
     }
 
     if (!empty($_SESSION['reset_expiracion'])) {
@@ -99,8 +112,10 @@ if (isset($_POST['cambiar_password'])) {
 }
 
 // segundos que le quedan al codigo para el contador
-$segundos_restantes = (int)(($_SESSION['reset_expiracion'] ?? 0) - time());
-$segundos_restantes = $segundos_restantes > 0 ? $segundos_restantes : 0;
+$segundos_restantes = $passwordChangeService->secondsRemaining(
+    (int) ($_SESSION['reset_expiracion'] ?? 0),
+    time()
+);
 ?>
 <!DOCTYPE html>
 <html lang="es" data-theme="wireframe">

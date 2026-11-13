@@ -8,107 +8,69 @@ requiereRol('Administrador');
 require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
+$userRepository = new \App\Repository\UserRepository($conn);
+$userService = new \App\Service\UserService();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verificarCsrf();
 }
 
-// lista de fichas para el filtro
-$stmt = $conn->query("SELECT id_ficha, codigo_ficha FROM ficha ORDER BY codigo_ficha");
-$lista_fichas = $stmt->fetchAll();
+$lista_fichas = $userRepository->findFichas();
 
 // editar un aprendiz existente (solo admin)
 if (isset($_POST['editar_aprendiz']) ) {
-    $id_aprendiz = $_POST['id_aprendiz'] ?? '';
-    $numero_documento = trim($_POST['documento'] ?? '');
-    $nombre = trim($_POST['nombre'] ?? '');
-    $apellido = trim($_POST['apellido'] ?? '');
-    $correo = trim($_POST['correo'] ?? '');
-    $password = $_POST['password'] ?? '';
+    $learner = [
+        'id' => $_POST['id_aprendiz'] ?? '',
+        'documento' => trim($_POST['documento'] ?? ''),
+        'nombre' => trim($_POST['nombre'] ?? ''),
+        'apellido' => trim($_POST['apellido'] ?? ''),
+        'correo' => trim($_POST['correo'] ?? ''),
+        'password' => $_POST['password'] ?? '',
+        'ficha' => $_POST['ficha'] ?? '',
+        'estado' => $_POST['estado'] ?? 'Activo',
+    ];
     $rfid = trim($_POST['rfid'] ?? '');
-    $rfid = $rfid !== '' ? $rfid : null;
-    $ficha = $_POST['ficha'] ?? '';
-    $estado = $_POST['estado'] ?? 'Activo';
-
-    // validar que el nombre tenga al menos 5 caractares
-    if(mb_strlen(trim($nombre),'UTF-8')< 5)
-    {
-        $mensaje = "el nombre debe de contener al menos 5 caracteres";
+    $learner['rfid'] = $rfid !== '' ? $rfid : null;
+    $mensaje = $userService->validateLearnerName($learner['nombre']);
+    if ($mensaje === null) {
+        try {
+            $userRepository->updateLearner(
+                $learner,
+                $learner['password'] !== '' ? hashearPassword($learner['password']) : null
+            );
+            header('Location: admin_aprendices.php?editado=1');
+            exit();
+        } catch (Exception $e) {
+            $error_editar = true;
+            if (strpos($e->getMessage(), 'rfid_uid') !== false) {
+                $mensaje_editar = 'Ese RFID ya esta registrado en otro usuario';
+            } else {
+                $mensaje_editar = 'Ese numero de documento ya esta registrado';
+            }
+        }
+    } else {
+        $mensaje = 'el nombre debe de contener al menos 5 caracteres';
     }
-    else
-        {
-            try {
-        // actualizar los datos del aprendiz
-        $stmt = $conn->prepare("UPDATE usuario
-            SET numero_documento = ?, nombre = ?, apellido = ?, correo = ?, rfid_uid = ?, estado = ?
-            WHERE id_usuario = ?");
-        $stmt->execute([$numero_documento, $nombre, $apellido, $correo, $rfid, $estado, $id_aprendiz]);
-
-        // cambiar la contraseña solo si se escribio una nueva
-        if ($password !== '') {
-            $stmt = $conn->prepare("UPDATE usuario SET password = ? WHERE id_usuario = ?");
-            $stmt->execute([hashearPassword($password), $id_aprendiz]);
-        }
-
-        // dejar una sola ficha asignada
-        $stmt = $conn->prepare("DELETE FROM usuario_has_ficha WHERE id_aprendiz = ?");
-        $stmt->execute([$id_aprendiz]);
-        if ($ficha != '') {
-            $stmt = $conn->prepare("INSERT INTO usuario_has_ficha (id_aprendiz, id_ficha) VALUES (?, ?)");
-            $stmt->execute([$id_aprendiz, $ficha]);
-        }
-
-        header('Location: admin_aprendices.php?editado=1');
-        exit();
-    } catch (Exception $e) {
-        // si algo ya existe se muestra el error sin romper la pagina
-        $error_editar = true;
-        if (strpos($e->getMessage(), 'rfid_uid') !== false) {
-            $mensaje_editar = 'Ese RFID ya esta registrado en otro usuario';
-        } else {
-            $mensaje_editar = 'Ese numero de documento ya esta registrado';
-        }
-    }
-        }
-
-    
 }
 
 // insertar un nuevo aprendiz cuando llega el formulario
 if (isset($_POST['documento']) && empty($_POST['id_aprendiz'])) {
     // datos del formulario
-    $numero_documento = $_POST['documento'];
-    $nombre = $_POST['nombre'];
-    $apellido = $_POST['apellido'];
-    $correo = $_POST['correo'];
-    $password = $_POST['password'];
-    // el rfid es opcional: si viene vacio se guarda como null
     $rfid = trim($_POST['rfid'] ?? '');
-    $rfid = $rfid !== '' ? $rfid : null;
-    $ficha = $_POST['ficha'] ?? '';
+    $learner = [
+        'documento' => $_POST['documento'],
+        'nombre' => $_POST['nombre'],
+        'apellido' => $_POST['apellido'],
+        'correo' => $_POST['correo'],
+        'rfid' => $rfid !== '' ? $rfid : null,
+        'ficha' => $_POST['ficha'] ?? '',
+    ];
 
-    // guardar el aprendiz con rol 3
-    // los signos ? son los valores que se pasan despues en execute
     try {
-        $stmt = $conn->prepare("INSERT INTO usuario
-            (numero_documento, nombre, apellido, correo, password, rfid_uid, id_rol, estado)
-            VALUES (?, ?, ?, ?, ?, ?, 3, 'Activo')");
-        $stmt->execute([$numero_documento, $nombre, $apellido, $correo, hashearPassword($password), $rfid]);
-
-        // id del aprendiz recien creado
-        $id_nuevo = $conn->lastInsertId();
-
-        // asignarlo a la ficha elegida en el formulario
-        if ($ficha != '') {
-            $stmt = $conn->prepare("INSERT INTO usuario_has_ficha (id_aprendiz, id_ficha) VALUES (?, ?)");
-            $stmt->execute([$id_nuevo, $ficha]);
-        }
-
-        // redirigir a la misma pagina con mensaje de exito
+        $userRepository->createLearner($learner, hashearPassword($_POST['password']));
         header('Location: admin_aprendices.php?agregado=1');
         exit();
     } catch (Exception $e) {
-        // si algo ya existe se muestra el error sin romper la pagina
         $duplicado = true;
         if (strpos($e->getMessage(), 'rfid_uid') !== false) {
             $mensaje_duplicado = 'Ese RFID ya esta registrado en otro aprendiz';
@@ -118,55 +80,17 @@ if (isset($_POST['documento']) && empty($_POST['id_aprendiz'])) {
     }
 }
 
-// filtros de busqueda
-$buscar = $_GET['buscar'] ?? '';
-$ficha = $_GET['ficha'] ?? '';
-$estado = $_GET['estado'] ?? '';
-
-// lista de aprendices con su ficha (consultas preparadas)
-$sql = "SELECT u.id_usuario AS id, u.numero_documento AS documento, CONCAT(u.nombre, ' ', u.apellido) AS nombre, u.correo,
-    f.codigo_ficha AS ficha, uf.id_ficha AS id_ficha, u.rfid_uid AS rfid, u.estado
-    FROM usuario u
-    LEFT JOIN usuario_has_ficha uf ON uf.id_aprendiz = u.id_usuario
-    LEFT JOIN ficha f ON f.id_ficha = uf.id_ficha
-    WHERE u.id_rol = 3";
-
-$params = [];
-// filtro por nombre o documento
-if ($buscar != '') {
-    $sql .= " AND (u.numero_documento LIKE :buscar OR u.nombre LIKE :buscar)";
-    $params[':buscar'] = '%' . $buscar . '%';
-}
-// filtro por ficha
-if ($ficha != '') {
-    $sql .= " AND uf.id_ficha = :ficha";
-    $params[':ficha'] = (int)$ficha;
-}
-// filtro por estado (solo valores del enum)
-if ($estado != '' && in_array($estado, ['Activo', 'Inactivo'], true)) {
-    $sql .= " AND u.estado = :estado";
-    $params[':estado'] = $estado;
-}
-$sql .= " ORDER BY u.nombre";
-$stmt = $conn->prepare($sql);
-$stmt->execute($params);
-$lista_aprendices = $stmt->fetchAll();
+$filtros = $userService->normalizeLearnerFilters($_GET);
+$buscar = $filtros['buscar'];
+$ficha = $filtros['ficha'];
+$estado = $filtros['estado'];
+$lista_aprendices = $userRepository->findLearners($filtros);
 
 // aprendiz que se va a editar, si llega el id por la url
 $modo_editar = isset($_GET['editar']) ? (int)$_GET['editar'] : 0;
 $aprendiz_editar = null;
 if ($modo_editar > 0) {
-    $stmt = $conn->prepare("SELECT id_usuario, numero_documento, nombre, apellido, correo, rfid_uid, estado
-        FROM usuario WHERE id_usuario = ? AND id_rol = 3");
-    $stmt->execute([$modo_editar]);
-    $aprendiz_editar = $stmt->fetch();
-
-    if ($aprendiz_editar) {
-        // ficha que tiene asignada ahora
-        $stmt = $conn->prepare("SELECT id_ficha FROM usuario_has_ficha WHERE id_aprendiz = ? LIMIT 1");
-        $stmt->execute([$modo_editar]);
-        $aprendiz_editar['id_ficha'] = $stmt->fetchColumn();
-    }
+    $aprendiz_editar = $userRepository->findLearner($modo_editar);
 }
 ?>
 <!DOCTYPE html>

@@ -8,6 +8,8 @@ requiereRol('Instructor');
 require_once '../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
+$attendanceRepository = new \App\Repository\AttendanceRepository($conn);
+$estados_opciones = (new \App\Service\AttendanceService())->allowedStatuses();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verificarCsrf();
@@ -16,73 +18,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // id del instructor logueado
 $id = $_SESSION['id_usuario'];
 
-// fichas del instructor para el selector
-$stmt = $conn->prepare("SELECT id_ficha, codigo_ficha FROM ficha WHERE id_instructor_encargado = ? ORDER BY codigo_ficha");
-$stmt->execute([$id]);
-$lista_fichas = $stmt->fetchAll();
-
-// opciones de estado que acepta la tabla ingreso
-$estados_opciones = ['Normal', 'Retardo', 'Inasistencia', 'Salida Temprana'];
+$lista_fichas = $attendanceRepository->findInstructorFichas((int) $id);
 
 // guardar la asistencia manual que llega del formulario
 if (isset($_POST['guardar_asistencia'])) {
     $id_ficha = $_POST['id_ficha'] ?? '';
     $fecha = $_POST['fecha'] ?? '';
-
-    // la ficha debe ser de este instructor
-    $stmt = $conn->prepare("SELECT hora_entrada FROM ficha WHERE id_ficha = ? AND id_instructor_encargado = ?");
-    $stmt->execute([$id_ficha, $id]);
-    $ficha_guardar = $stmt->fetch();
-
-    if (!$ficha_guardar || $fecha === '') {
+    $saved = $attendanceRepository->saveManualAttendance(
+        (int) $id_ficha,
+        (int) $id,
+        (string) $fecha,
+        $_POST['estado'] ?? [],
+        $_POST['entrada'] ?? [],
+        $_POST['salida'] ?? []
+    );
+    if (!$saved) {
         header('Location: instructor_asistencia.php?error=1');
         exit();
     }
-
-    $estados = $_POST['estado'] ?? [];
-    $entradas = $_POST['entrada'] ?? [];
-    $salidas = $_POST['salida'] ?? [];
-
-    // hora de entrada de la ficha en minutos para calcular el retardo
-    $min_ficha = (int)substr($ficha_guardar['hora_entrada'], 0, 2) * 60 + (int)substr($ficha_guardar['hora_entrada'], 3, 2);
-
-    foreach ($estados as $id_aprendiz => $estado) {
-        $hora_entrada = $entradas[$id_aprendiz] ?? '';
-        $hora_salida = $salidas[$id_aprendiz] ?? '';
-        $hora_entrada = $hora_entrada !== '' ? $hora_entrada : null;
-        $hora_salida = $hora_salida !== '' ? $hora_salida : null;
-        $estado = in_array($estado, $estados_opciones) ? $estado : 'Inasistencia';
-
-        // minutos de retardo comparando con la hora de entrada de la ficha
-        $retardo = 0;
-        if ($hora_entrada !== null && $estado !== 'Inasistencia') {
-            $min_entrada = (int)substr($hora_entrada, 0, 2) * 60 + (int)substr($hora_entrada, 3, 2);
-            if ($min_entrada > $min_ficha) {
-                $retardo = $min_entrada - $min_ficha;
-            }
-        }
-
-        // marca si la salida fue temprana
-        $salida_temprana = $estado === 'Salida Temprana' ? 1 : 0;
-
-        // si ya existe un ingreso de ese aprendiz ese dia se actualiza
-        $stmt = $conn->prepare("SELECT id_ingreso FROM ingreso WHERE id_aprendiz = ? AND fecha = ?");
-        $stmt->execute([$id_aprendiz, $fecha]);
-        $existe = $stmt->fetch();
-
-        if ($existe) {
-            $stmt = $conn->prepare("UPDATE ingreso
-                SET hora_entrada_registrada = ?, hora_salida_registrada = ?, minutos_retardo = ?, salida_temprana = ?, estado_asistencia = ?
-                WHERE id_ingreso = ?");
-            $stmt->execute([$hora_entrada, $hora_salida, $retardo, $salida_temprana, $estado, $existe['id_ingreso']]);
-        } else {
-            $stmt = $conn->prepare("INSERT INTO ingreso
-                (id_aprendiz, fecha, hora_entrada_registrada, hora_salida_registrada, minutos_retardo, salida_temprana, estado_asistencia)
-                VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$id_aprendiz, $fecha, $hora_entrada, $hora_salida, $retardo, $salida_temprana, $estado]);
-        }
-    }
-
     header('Location: instructor_asistencia.php?guardado=1');
     exit();
 }
@@ -94,39 +47,22 @@ $fecha_sel = $_POST['fecha'] ?? date('Y-m-d');
 // datos de la ficha seleccionada, solo si es de este instructor
 $ficha_sel = null;
 if ($id_ficha_sel != '') {
-    $stmt = $conn->prepare("SELECT id_ficha, codigo_ficha, hora_entrada FROM ficha WHERE id_ficha = ? AND id_instructor_encargado = ?");
-    $stmt->execute([$id_ficha_sel, $id]);
-    $ficha_sel = $stmt->fetch();
+    $ficha_sel = $attendanceRepository->findOwnedFicha((int) $id_ficha_sel, (int) $id);
 }
 
 // aprendices de la ficha con su ingreso de ese dia si ya existe
 $aprendices = [];
 if ($ficha_sel) {
-    $stmt = $conn->prepare("SELECT u.id_usuario, u.numero_documento, u.nombre, u.apellido,
-        i.hora_entrada_registrada, i.hora_salida_registrada, i.estado_asistencia
-        FROM usuario_has_ficha uf
-        INNER JOIN usuario u ON u.id_usuario = uf.id_aprendiz
-        LEFT JOIN ingreso i ON i.id_aprendiz = u.id_usuario AND i.fecha = ?
-        WHERE uf.id_ficha = ? AND u.id_rol = 3
-        ORDER BY u.nombre");
-    $stmt->execute([$fecha_sel, $id_ficha_sel]);
-    $aprendices = $stmt->fetchAll();
+    $aprendices = $attendanceRepository->findLearnersForFicha(
+        (int) $id_ficha_sel,
+        (string) $fecha_sel
+    );
 }
 
 // hora de entrada que se propone en el formulario
 $hora_entrada_ficha = $ficha_sel ? substr($ficha_sel['hora_entrada'], 0, 5) : '';
 
-// asistencias ya registradas en las fichas del instructor
-$stmt = $conn->prepare("SELECT CONCAT(u.nombre, ' ', u.apellido) AS nombre, f.codigo_ficha AS ficha, i.fecha,
-    i.hora_entrada_registrada AS entrada, i.hora_salida_registrada AS salida, i.estado_asistencia AS estado
-    FROM ingreso i
-    INNER JOIN usuario u ON u.id_usuario = i.id_aprendiz
-    INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = u.id_usuario
-    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha
-    WHERE f.id_instructor_encargado = ?
-    ORDER BY i.fecha DESC, i.hora_entrada_registrada DESC");
-$stmt->execute([$id]);
-$asistencia_registrada = $stmt->fetchAll();
+$asistencia_registrada = $attendanceRepository->findInstructorAttendance((int) $id);
 ?>
 <!DOCTYPE html>
 <html lang="es">

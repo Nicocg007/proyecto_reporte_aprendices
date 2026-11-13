@@ -4,23 +4,9 @@ require_once __DIR__ . '/model/seguridad_helper.php';
 iniciarSesionSegura();
 
 // Si ya tiene sesion activa, redirigir al dashboard
-if (isset($_SESSION['id_usuario'])) {
-    $rol = $_SESSION['rol'] ?? '';
-    
-    switch ($rol) {
-        case 'Administrador':
-            header('Location: views/admin_dashboard.php');
-            break;
-        case 'Instructor':
-            header('Location: views/instructor_dashboard.php');
-            break;
-        case 'Aprendiz':
-            header('Location: views/aprendiz_dashboard.php');
-            break;
-        default:
-            header('Location: views/login.php');
-            break;
-    }
+$authService = new \App\Service\AuthService();
+if ($authService->isAuthenticated($_SESSION)) {
+    header('Location: views/' . $authService->dashboardForRole($_SESSION['rol'] ?? ''));
     exit();
 }
 

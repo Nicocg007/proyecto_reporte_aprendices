@@ -5,37 +5,22 @@ requiereRoles(['Administrador', 'Instructor', 'Aprendiz']);
 
 // conexion a la base de datos
 require_once '../config/database.php';
+require_once '../vendor/autoload.php';
 $db = new Database();
 $conn = $db->getConnection();
 
 $rol_actual = $_SESSION['rol'] ?? '';
 $id_usuario = (int)($_SESSION['id_usuario'] ?? 0);
 
-// lista de fichas para el filtro (instructor solo las suyas)
-if ($rol_actual === 'Instructor') {
-    $stmt = $conn->prepare("SELECT id_ficha, codigo_ficha, nombre_programa FROM ficha WHERE id_instructor_encargado = ? ORDER BY codigo_ficha");
-    $stmt->execute([$id_usuario]);
-} else {
-    $stmt = $conn->query("SELECT id_ficha, codigo_ficha, nombre_programa FROM ficha ORDER BY codigo_ficha");
-}
-$lista_fichas = $stmt->fetchAll();
+$attendanceRepository = new \App\Repository\AttendanceRepository($conn);
+$attendanceService = new \App\Service\AttendanceService();
+$lista_fichas = $attendanceRepository->findFichasForReport($rol_actual, $id_usuario);
 
-// filtros de busqueda
-$fecha_inicio = trim($_GET['fecha_inicio'] ?? '');
-$fecha_fin = trim($_GET['fecha_fin'] ?? '');
-$ficha = $_GET['ficha'] ?? '';
-$estado = trim($_GET['estado'] ?? '');
-
-$estados_validos = ['Normal', 'Retardo', 'Inasistencia', 'Salida Temprana'];
-if ($estado !== '' && !in_array($estado, $estados_validos, true)) {
-    $estado = '';
-}
-if ($fecha_inicio !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha_inicio)) {
-    $fecha_inicio = '';
-}
-if ($fecha_fin !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha_fin)) {
-    $fecha_fin = '';
-}
+$filtros = $attendanceService->normalizeReportFilters($_GET);
+$fecha_inicio = $filtros['fecha_inicio'];
+$fecha_fin = $filtros['fecha_fin'];
+$ficha = $filtros['ficha'];
+$estado = $filtros['estado'];
 
 // filtros activos para pasarlos a la exportacion y a la paginacion
 $filtros = [
@@ -48,82 +33,39 @@ $filtros_activos = array_filter($filtros, function ($v) { return $v !== ''; });
 $query_actual = http_build_query($filtros_activos);
 
 $por_pagina = 10;
-$pagina = max(1, (int)($_GET['pagina'] ?? 1));
-
-$condiciones = [];
-$params = [];
-if ($fecha_inicio != '') {
-    $condiciones[] = "i.fecha >= :fecha_inicio";
-    $params[':fecha_inicio'] = $fecha_inicio;
+$paginaSolicitada = max(1, (int)($_GET['pagina'] ?? 1));
+$resultados = $attendanceRepository->findReportPage(
+    $filtros,
+    $rol_actual,
+    $id_usuario,
+    $por_pagina,
+    ($paginaSolicitada - 1) * $por_pagina
+);
+$pageInfo = $attendanceService->normalizePagination(
+    $paginaSolicitada,
+    $por_pagina,
+    $resultados['total_rows']
+);
+$pagina = $pageInfo['page'];
+if ($pagina !== $paginaSolicitada) {
+    $resultados = $attendanceRepository->findReportPage(
+        $filtros,
+        $rol_actual,
+        $id_usuario,
+        $por_pagina,
+        $pageInfo['offset']
+    );
 }
-if ($fecha_fin != '') {
-    $condiciones[] = "i.fecha <= :fecha_fin";
-    $params[':fecha_fin'] = $fecha_fin;
-}
-if ($ficha != '') {
-    $condiciones[] = "uf.id_ficha = :ficha";
-    $params[':ficha'] = (int)$ficha;
-}
-if ($estado != '') {
-    $condiciones[] = "i.estado_asistencia = :estado";
-    $params[':estado'] = $estado;
-}
-
-// alcance por rol
-if ($rol_actual === 'Aprendiz') {
-    $condiciones[] = "i.id_aprendiz = :id_aprendiz";
-    $params[':id_aprendiz'] = $id_usuario;
-} elseif ($rol_actual === 'Instructor') {
-    $condiciones[] = "f.id_instructor_encargado = :id_instructor";
-    $params[':id_instructor'] = $id_usuario;
-}
-
-$where = count($condiciones) > 0 ? " WHERE " . implode(' AND ', $condiciones) : '';
-
-$from = " FROM ingreso i
-    INNER JOIN usuario u ON u.id_usuario = i.id_aprendiz
-    INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = u.id_usuario
-    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha";
-
-$stmt = $conn->prepare("SELECT COUNT(*) AS total" . $from . $where);
-$stmt->execute($params);
-$total_registros = $stmt->fetch()['total'];
-$total_paginas = max(1, (int)ceil($total_registros / $por_pagina));
-
-if ($pagina > $total_paginas) {
-    $pagina = $total_paginas;
-}
-$offset = ($pagina - 1) * $por_pagina;
-
-$sql = "SELECT CONCAT(u.nombre, ' ', u.apellido) AS nombre, u.numero_documento AS documento,
-    f.codigo_ficha AS ficha, i.fecha, i.hora_entrada_registrada AS entrada,
-    i.hora_salida_registrada AS salida, i.minutos_retardo AS retardo, i.estado_asistencia AS estado"
-    . $from . $where . "
-    ORDER BY i.fecha DESC, i.hora_entrada_registrada DESC
-    LIMIT :limite OFFSET :offset";
-$stmt = $conn->prepare($sql);
-foreach ($params as $k => $v) {
-    $stmt->bindValue($k, $v);
-}
-$stmt->bindValue(':limite', $por_pagina, PDO::PARAM_INT);
-$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-$stmt->execute();
-$reporte_asistencias = $stmt->fetchAll();
-
-$total_normales = 0;
-$total_retardos = 0;
-$total_inasistencias = 0;
-$total_salidas = 0;
-$stmt = $conn->prepare("SELECT i.estado_asistencia AS estado, COUNT(*) AS total" . $from . $where . " GROUP BY i.estado_asistencia");
-$stmt->execute($params);
-foreach ($stmt->fetchAll() as $fila) {
-    switch ($fila['estado']) {
-        case 'Normal': $total_normales = $fila['total']; break;
-        case 'Retardo': $total_retardos = $fila['total']; break;
-        case 'Inasistencia': $total_inasistencias = $fila['total']; break;
-        case 'Salida Temprana': $total_salidas = $fila['total']; break;
-    }
-}
+$total_paginas = $pageInfo['total_pages'];
+$reporte_asistencias = $resultados['rows'];
+$totales_estado = array_merge(
+    array_fill_keys(['Normal', 'Retardo', 'Inasistencia', 'Salida Temprana'], 0),
+    $resultados['status_counts']
+);
+$total_normales = $totales_estado['Normal'];
+$total_retardos = $totales_estado['Retardo'];
+$total_inasistencias = $totales_estado['Inasistencia'];
+$total_salidas = $totales_estado['Salida Temprana'];
 
 $url_pagina = 'reportes.php?' . ($query_actual !== '' ? $query_actual . '&' : '') . 'pagina=';
 ?>
@@ -161,7 +103,7 @@ $url_pagina = 'reportes.php?' . ($query_actual !== '' ? $query_actual . '&' : ''
                                 <option value="">Todas las fichas</option>
                                 <?php if (!empty($lista_fichas)): ?>
                                     <?php foreach ($lista_fichas as $ficha): ?>
-                                        <option value="<?php echo e($ficha['id_ficha']); ?>" <?php echo (($_GET['ficha'] ?? '') == $ficha['id_ficha']) ? 'selected' : ''; ?>>
+                                        <option value="<?php echo e($ficha['id_ficha']); ?>" <?php echo ($ficha == $ficha['id_ficha']) ? 'selected' : ''; ?>>
                                             <?php echo e($ficha['codigo_ficha'] . ' - ' . $ficha['nombre_programa']); ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -172,10 +114,10 @@ $url_pagina = 'reportes.php?' . ($query_actual !== '' ? $query_actual . '&' : ''
                             <label class="filter-label">Estado</label>
                             <select name="estado" class="filter-input">
                                 <option value="">Todos</option>
-                                <option value="Normal" <?php echo ($_GET['estado'] ?? '') == 'Normal' ? 'selected' : ''; ?>>Normal</option>
-                                <option value="Retardo" <?php echo ($_GET['estado'] ?? '') == 'Retardo' ? 'selected' : ''; ?>>Retardo</option>
-                                <option value="Inasistencia" <?php echo ($_GET['estado'] ?? '') == 'Inasistencia' ? 'selected' : ''; ?>>Inasistencia</option>
-                                <option value="Salida Temprana" <?php echo ($_GET['estado'] ?? '') == 'Salida Temprana' ? 'selected' : ''; ?>>Salida Temprana</option>
+                                <option value="Normal" <?php echo $estado == 'Normal' ? 'selected' : ''; ?>>Normal</option>
+                                <option value="Retardo" <?php echo $estado == 'Retardo' ? 'selected' : ''; ?>>Retardo</option>
+                                <option value="Inasistencia" <?php echo $estado == 'Inasistencia' ? 'selected' : ''; ?>>Inasistencia</option>
+                                <option value="Salida Temprana" <?php echo $estado == 'Salida Temprana' ? 'selected' : ''; ?>>Salida Temprana</option>
                             </select>
                         </div>
                         <div class="filter-group filter-actions">

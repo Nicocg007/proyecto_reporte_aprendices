@@ -5,99 +5,45 @@ requiereRoles(['Administrador', 'Instructor', 'Aprendiz']);
 
 // conexion a la base de datos
 require_once '../config/database.php';
+require_once '../vendor/autoload.php';
 $db = new Database();
 $conn = $db->getConnection();
 
 iniciarSesionSegura();
 
 // mismos filtros que usa el reporte
-$fecha_inicio = trim($_GET['fecha_inicio'] ?? '');
-$fecha_fin = trim($_GET['fecha_fin'] ?? '');
-$ficha = $_GET['ficha'] ?? '';
-$estado = trim($_GET['estado'] ?? '');
+$filtros = (new \App\Service\AttendanceService())->normalizeReportFilters($_GET);
+$fecha_inicio = $filtros['fecha_inicio'];
+$fecha_fin = $filtros['fecha_fin'];
+$ficha = $filtros['ficha'];
+$estado = $filtros['estado'];
 $tipo = $_GET['tipo'] ?? 'excel';
 
-// estados validos del enum
-$estados_validos = ['Normal', 'Retardo', 'Inasistencia', 'Salida Temprana'];
-if ($estado !== '' && !in_array($estado, $estados_validos, true)) {
-    $estado = '';
-}
-
-// fechas solo si parecen YYYY-MM-DD
-if ($fecha_inicio !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha_inicio)) {
-    $fecha_inicio = '';
-}
-if ($fecha_fin !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha_fin)) {
-    $fecha_fin = '';
-}
-
-$sql = "SELECT CONCAT(u.nombre, ' ', u.apellido) AS nombre, u.numero_documento AS documento,
-    f.codigo_ficha AS ficha, i.fecha, i.hora_entrada_registrada AS entrada,
-    i.hora_salida_registrada AS salida, i.minutos_retardo AS retardo, i.estado_asistencia AS estado
-    FROM ingreso i
-    INNER JOIN usuario u ON u.id_usuario = i.id_aprendiz
-    INNER JOIN usuario_has_ficha uf ON uf.id_aprendiz = u.id_usuario
-    INNER JOIN ficha f ON f.id_ficha = uf.id_ficha";
-
-$condiciones = [];
-$params = [];
-
-if ($fecha_inicio !== '') {
-    $condiciones[] = "i.fecha >= :fecha_inicio";
-    $params[':fecha_inicio'] = $fecha_inicio;
-}
-if ($fecha_fin !== '') {
-    $condiciones[] = "i.fecha <= :fecha_fin";
-    $params[':fecha_fin'] = $fecha_fin;
-}
-if ($ficha !== '') {
-    $condiciones[] = "uf.id_ficha = :ficha";
-    $params[':ficha'] = (int)$ficha;
-}
-if ($estado !== '') {
-    $condiciones[] = "i.estado_asistencia = :estado";
-    $params[':estado'] = $estado;
-}
-
-// alcance por rol (se refuerza en commit de autorizacion; aqui base segura)
 $rol = $_SESSION['rol'] ?? '';
-if ($rol === 'Aprendiz') {
-    $condiciones[] = "i.id_aprendiz = :id_aprendiz";
-    $params[':id_aprendiz'] = (int)$_SESSION['id_usuario'];
-} elseif ($rol === 'Instructor') {
-    $condiciones[] = "f.id_instructor_encargado = :id_instructor";
-    $params[':id_instructor'] = (int)$_SESSION['id_usuario'];
-}
-
-if (count($condiciones) > 0) {
-    $sql .= " WHERE " . implode(' AND ', $condiciones);
-}
-$sql .= " ORDER BY i.fecha DESC, i.hora_entrada_registrada DESC";
-
-$stmt = $conn->prepare($sql);
-$stmt->execute($params);
-$filas = $stmt->fetchAll();
+$filas = (new \App\Repository\AttendanceRepository($conn))->findReportRows(
+    $filtros,
+    $rol,
+    (int) ($_SESSION['id_usuario'] ?? 0)
+);
 
 // excel: se descarga un csv que abre directo en excel
 if ($tipo === 'excel') {
-    $nombre = 'reporte_asistencias_' . date('Y-m-d') . '.csv';
+    $reportService = new \App\Service\ReportService();
+    $nombre = $reportService->csvFilename(date('Y-m-d'));
     header('Content-Type: text/csv; charset=UTF-8');
     header('Content-Disposition: attachment; filename="' . $nombre . '"');
 
     echo "\xEF\xBB\xBF";
     $salida = fopen('php://output', 'w');
-    fputcsv($salida, ['Aprendiz', 'Documento', 'Ficha', 'Fecha', 'Entrada', 'Salida', 'Retardo (min)', 'Estado'], ';');
+    fputcsv($salida, $reportService->csvHeaders(), ';');
     foreach ($filas as $f) {
-        fputcsv($salida, [$f['nombre'], $f['documento'], $f['ficha'], $f['fecha'], $f['entrada'], $f['salida'], $f['retardo'], $f['estado']], ';');
+        fputcsv($salida, $reportService->csvRow($f), ';');
     }
     fclose($salida);
     exit();
 }
 
-$totales = ['Normal' => 0, 'Retardo' => 0, 'Inasistencia' => 0, 'Salida Temprana' => 0];
-foreach ($filas as $f) {
-    if (isset($totales[$f['estado']])) $totales[$f['estado']]++;
-}
+$totales = (new \App\Service\AttendanceService())->countByStatus($filas);
 ?>
 <!DOCTYPE html>
 <html lang="es">
