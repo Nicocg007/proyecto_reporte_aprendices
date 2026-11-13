@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 final class ScheduleServiceTest extends TestCase
 {
     #[DataProvider('gridCases')]
-    public function testBuildGridAndScheduleHelpers(
+    public function testBuildGrid(
         array $rows,
         string $minimumTime,
         string $maximumTime,
@@ -23,13 +23,23 @@ final class ScheduleServiceTest extends TestCase
         self::assertSame($expectedMap, $grid['map']);
         self::assertSame($expectedHolidays, $grid['holidays']);
         self::assertSame($expectedInstructors, $grid['instructors']);
+    }
 
-        $week = $service->buildWeek('2026-11-13', '2026-11-01', '2026-11-30');
+    public function testBuildWeek(): void
+    {
+        $week = (new ScheduleService())->buildWeek('2026-11-13', '2026-11-01', '2026-11-30');
         self::assertSame('2026-11-09', $week['monday']->format('Y-m-d'));
         self::assertSame('2026-11-14', $week['saturday']->format('Y-m-d'));
         self::assertTrue($week['has_previous']);
         self::assertTrue($week['has_next']);
-        self::assertSame('blue', $service->colorForInstructor('Instructor A', ['red', 'green', 'blue']));
+    }
+
+    public function testColorForInstructor(): void
+    {
+        self::assertSame(
+            'blue',
+            (new ScheduleService())->colorForInstructor('Instructor A', ['red', 'green', 'blue'])
+        );
     }
 
     public static function gridCases(): array

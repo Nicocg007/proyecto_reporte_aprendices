@@ -1,33 +1,58 @@
 <?php
 
 use App\Service\UserService;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class UserServiceTest extends TestCase
 {
-    public function testLearnerFiltersAndNameValidation(): void
+    #[DataProvider('learnerFilterCases')]
+    public function testLearnerFilters(array $filters, array $expected): void
     {
-        $service = new UserService();
+        self::assertSame($expected, (new UserService())->normalizeLearnerFilters($filters));
+    }
 
-        self::assertSame([
-            'buscar' => ' Ana ',
-            'ficha' => '12',
-            'estado' => 'Activo',
-        ], $service->normalizeLearnerFilters([
-            'buscar' => ' Ana ',
-            'ficha' => '12',
-            'estado' => 'Activo',
-        ]));
-        self::assertSame([
-            'buscar' => '',
-            'ficha' => '',
-            'estado' => '',
-        ], $service->normalizeLearnerFilters(['estado' => 'activo']));
+    public static function learnerFilterCases(): array
+    {
+        return [
+            'filter values retain surrounding spaces' => [
+                ['buscar' => ' Ana ', 'ficha' => '12', 'estado' => 'Activo'],
+                ['buscar' => ' Ana ', 'ficha' => '12', 'estado' => 'Activo'],
+            ],
+            'empty filter values remain empty' => [
+                ['buscar' => '', 'ficha' => '', 'estado' => ''],
+                ['buscar' => '', 'ficha' => '', 'estado' => ''],
+            ],
+            'lowercase status is rejected' => [
+                ['buscar' => 'Ana', 'ficha' => '12', 'estado' => 'activo'],
+                ['buscar' => 'Ana', 'ficha' => '12', 'estado' => ''],
+            ],
+            'missing filter keys default to empty values' => [
+                [],
+                ['buscar' => '', 'ficha' => '', 'estado' => ''],
+            ],
+        ];
+    }
 
-        self::assertNull($service->validateLearnerName('  Maria  '));
-        self::assertSame(
-            'el nombre debe de contener al menos 5 caracteres',
-            $service->validateLearnerName(' Ana ')
-        );
+    #[DataProvider('learnerNameCases')]
+    public function testLearnerNameValidation(string $name, ?string $expected): void
+    {
+        self::assertSame($expected, (new UserService())->validateLearnerName($name));
+    }
+
+    public static function learnerNameCases(): array
+    {
+        return [
+            'four characters is too short' => [
+                'Luis',
+                'el nombre debe de contener al menos 5 caracteres',
+            ],
+            'five characters is accepted' => ['Maria', null],
+            'surrounding spaces do not affect length' => ['  Maria  ', null],
+            'empty name is too short' => [
+                '',
+                'el nombre debe de contener al menos 5 caracteres',
+            ],
+        ];
     }
 }

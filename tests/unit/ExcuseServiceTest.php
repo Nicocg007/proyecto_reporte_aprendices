@@ -63,27 +63,67 @@ final class ExcuseServiceTest extends TestCase
         ];
     }
 
-    public function testNotificationsAreScopedAndOmitZeroCounts(): void
+    #[DataProvider('notificationRoleCases')]
+    public function testNotificationsAreScopedByRole(array $counts, string $role, array $expected): void
     {
-        $service = new ExcuseService();
+        self::assertSame($expected, (new ExcuseService())->notifications($counts, $role));
+    }
 
-        self::assertSame(
-            [[
-                'texto' => 'Tienes 2 excusa(s) pendiente(s) por revisar',
-                'url' => 'admin_excusas.php',
-            ]],
-            $service->notifications(['Pendiente' => 2], 'Administrador')
-        );
-        self::assertSame([], $service->notifications(['Pendiente' => 0], 'Instructor'));
-        self::assertSame([
-            [
-                'texto' => 'Tienes 1 excusa(s) en espera de revision',
-                'url' => 'aprendiz_excusas.php',
+    public static function notificationRoleCases(): array
+    {
+        return [
+            'administrator sees pending review count' => [
+                ['Pendiente' => 2],
+                'Administrador',
+                [[
+                    'texto' => 'Tienes 2 excusa(s) pendiente(s) por revisar',
+                    'url' => 'admin_excusas.php',
+                ]],
             ],
-            [
-                'texto' => '2 excusa(s) aprobada(s)',
-                'url' => 'aprendiz_excusas.php',
+            'instructor sees pending review count' => [
+                ['Pendiente' => 2],
+                'Instructor',
+                [[
+                    'texto' => 'Tienes 2 excusa(s) pendiente(s) por revisar',
+                    'url' => 'instructor_excusas.php',
+                ]],
             ],
-        ], $service->notifications(['Pendiente' => 1, 'Aprobada' => 2], 'Aprendiz'));
+            'learner sees each nonzero status count' => [
+                ['Pendiente' => 1, 'Aprobada' => 2, 'Rechazada' => 3],
+                'Aprendiz',
+                [
+                    [
+                        'texto' => 'Tienes 1 excusa(s) en espera de revision',
+                        'url' => 'aprendiz_excusas.php',
+                    ],
+                    [
+                        'texto' => '2 excusa(s) aprobada(s)',
+                        'url' => 'aprendiz_excusas.php',
+                    ],
+                    [
+                        'texto' => '3 excusa(s) rechazada(s)',
+                        'url' => 'aprendiz_excusas.php',
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    #[DataProvider('zeroNotificationCases')]
+    public function testNotificationsOmitZeroCounts(array $counts, string $role): void
+    {
+        self::assertSame([], (new ExcuseService())->notifications($counts, $role));
+    }
+
+    public static function zeroNotificationCases(): array
+    {
+        return [
+            'administrator omits zero pending count' => [['Pendiente' => 0], 'Administrador'],
+            'instructor omits zero pending count' => [['Pendiente' => 0], 'Instructor'],
+            'learner omits zero status counts' => [
+                ['Pendiente' => 0, 'Aprobada' => 0, 'Rechazada' => 0],
+                'Aprendiz',
+            ],
+        ];
     }
 }

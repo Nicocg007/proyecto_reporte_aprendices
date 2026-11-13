@@ -14,14 +14,14 @@ final class ReportService
     public function csvRow(array $attendance): array
     {
         return [
-            $attendance['nombre'],
-            $attendance['documento'],
-            $attendance['ficha'],
-            $attendance['fecha'],
-            $attendance['entrada'],
-            $attendance['salida'],
-            $attendance['retardo'],
-            $attendance['estado'],
+            $attendance['nombre'] ?? '',
+            $attendance['documento'] ?? '',
+            $attendance['ficha'] ?? '',
+            $attendance['fecha'] ?? '',
+            $attendance['entrada'] ?? '',
+            $attendance['salida'] ?? '',
+            $attendance['retardo'] ?? '',
+            $attendance['estado'] ?? '',
         ];
     }
 

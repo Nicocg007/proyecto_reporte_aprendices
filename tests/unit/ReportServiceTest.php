@@ -5,7 +5,7 @@ use PHPUnit\Framework\TestCase;
 
 final class ReportServiceTest extends TestCase
 {
-    public function testCsvHeadersRowsAndFilename(): void
+    public function testCsvHeaders(): void
     {
         $service = new ReportService();
 
@@ -19,6 +19,12 @@ final class ReportServiceTest extends TestCase
             'Retardo (min)',
             'Estado',
         ], $service->csvHeaders());
+    }
+
+    public function testCsvRow(): void
+    {
+        $service = new ReportService();
+
         self::assertSame([
             'Ana Perez',
             '123456',
@@ -38,9 +44,44 @@ final class ReportServiceTest extends TestCase
             'retardo' => 5,
             'estado' => 'Retardo',
         ]));
+    }
+
+    public function testCsvRowPreservesEmptyValues(): void
+    {
+        self::assertSame(
+            ['', '', '', '', '', '', '', ''],
+            (new ReportService())->csvRow([
+                'nombre' => '',
+                'documento' => '',
+                'ficha' => '',
+                'fecha' => '',
+                'entrada' => '',
+                'salida' => '',
+                'retardo' => '',
+                'estado' => '',
+            ])
+        );
+    }
+
+    public function testCsvRowWithMissingFields(): void
+    {
+        self::assertSame([
+            'Ana Perez',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+        ], (new ReportService())->csvRow(['nombre' => 'Ana Perez']));
+    }
+
+    public function testCsvFilename(): void
+    {
         self::assertSame(
             'reporte_asistencias_2026-11-13.csv',
-            $service->csvFilename('2026-11-13')
+            (new ReportService())->csvFilename('2026-11-13')
         );
     }
 }
