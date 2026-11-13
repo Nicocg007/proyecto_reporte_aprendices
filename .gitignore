@@ -20,3 +20,10 @@ config/env.php
 
 # Dependencias de Node (build de Tailwind)
 node_modules/
+
+# Composer
+/vendor/
+
+# PHPUnit
+.phpunit.cache/
+.phpunit.result.cache
