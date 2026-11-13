@@ -36,10 +36,15 @@ final class AttendanceServiceTest extends TestCase
                 '08:00:00',
                 ['estado' => 'Normal', 'minutos_retardo' => 0],
             ],
-            'late by less than thirty seconds rounds to zero' => [
+            'late by less than thirty seconds rounds up to one minute' => [
                 '08:00:29',
                 '08:00:00',
-                ['estado' => 'Retardo', 'minutos_retardo' => 0],
+                ['estado' => 'Retardo', 'minutos_retardo' => 1],
+            ],
+            'one second late is one minute' => [
+                '08:00:01',
+                '08:00:00',
+                ['estado' => 'Retardo', 'minutos_retardo' => 1],
             ],
             'half-minute rounds up' => [
                 '08:00:30',
@@ -235,11 +240,21 @@ final class AttendanceServiceTest extends TestCase
         ];
     }
 
-    public function testNormalizePaginationThrowsForZeroPageSize(): void
+    #[DataProvider('invalidPageSizeCases')]
+    public function testNormalizePaginationRejectsPageSizeBelowOne(int $perPage): void
     {
-        $this->expectException(DivisionByZeroError::class);
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('perPage debe ser mayor o igual a 1.');
 
-        (new AttendanceService())->normalizePagination(1, 0, 0);
+        (new AttendanceService())->normalizePagination(1, $perPage, 0);
+    }
+
+    public static function invalidPageSizeCases(): array
+    {
+        return [
+            'zero page size' => [0],
+            'negative page size' => [-1],
+        ];
     }
 
     #[DataProvider('rfidFeedbackCases')]

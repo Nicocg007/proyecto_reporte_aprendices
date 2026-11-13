@@ -15,16 +15,40 @@ final class UserServiceTest extends TestCase
     public static function learnerFilterCases(): array
     {
         return [
-            'filter values retain surrounding spaces' => [
-                ['buscar' => ' Ana ', 'ficha' => '12', 'estado' => 'Activo'],
-                ['buscar' => ' Ana ', 'ficha' => '12', 'estado' => 'Activo'],
+            'leading spaces in search are trimmed' => [
+                ['buscar' => ' Ana', 'ficha' => '12', 'estado' => 'Activo'],
+                ['buscar' => 'Ana', 'ficha' => '12', 'estado' => 'Activo'],
+            ],
+            'trailing spaces in search are trimmed' => [
+                ['buscar' => 'Ana ', 'ficha' => '12', 'estado' => 'Activo'],
+                ['buscar' => 'Ana', 'ficha' => '12', 'estado' => 'Activo'],
+            ],
+            'whitespace-only search becomes empty' => [
+                ['buscar' => '   ', 'ficha' => '12', 'estado' => 'Activo'],
+                ['buscar' => '', 'ficha' => '12', 'estado' => 'Activo'],
             ],
             'empty filter values remain empty' => [
                 ['buscar' => '', 'ficha' => '', 'estado' => ''],
                 ['buscar' => '', 'ficha' => '', 'estado' => ''],
             ],
-            'lowercase status is rejected' => [
+            'lowercase active status is normalized' => [
                 ['buscar' => 'Ana', 'ficha' => '12', 'estado' => 'activo'],
+                ['buscar' => 'Ana', 'ficha' => '12', 'estado' => 'Activo'],
+            ],
+            'uppercase active status is normalized' => [
+                ['buscar' => 'Ana', 'ficha' => '12', 'estado' => 'ACTIVO'],
+                ['buscar' => 'Ana', 'ficha' => '12', 'estado' => 'Activo'],
+            ],
+            'status with surrounding spaces is normalized' => [
+                ['buscar' => 'Ana', 'ficha' => '12', 'estado' => ' Activo '],
+                ['buscar' => 'Ana', 'ficha' => '12', 'estado' => 'Activo'],
+            ],
+            'lowercase inactive status is normalized' => [
+                ['buscar' => 'Ana', 'ficha' => '12', 'estado' => 'inactivo'],
+                ['buscar' => 'Ana', 'ficha' => '12', 'estado' => 'Inactivo'],
+            ],
+            'invalid status is discarded' => [
+                ['buscar' => 'Ana', 'ficha' => '12', 'estado' => 'Desconocido'],
                 ['buscar' => 'Ana', 'ficha' => '12', 'estado' => ''],
             ],
             'missing filter keys default to empty values' => [

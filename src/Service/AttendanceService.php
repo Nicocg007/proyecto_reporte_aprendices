@@ -20,8 +20,11 @@ final class AttendanceService
 
         if ($scheduledTime !== null && $currentTime > $scheduledTime) {
             $status = 'Retardo';
-            $lateMinutes = (int) round(
-                (strtotime($currentTime) - strtotime($scheduledTime)) / 60
+            $lateMinutes = max(
+                1,
+                (int) round(
+                    (strtotime($currentTime) - strtotime($scheduledTime)) / 60
+                )
             );
         }
 
@@ -94,6 +97,10 @@ final class AttendanceService
 
     public function normalizePagination(int $page, int $perPage, int $totalRows): array
     {
+        if ($perPage <= 0) {
+            throw new \InvalidArgumentException('perPage debe ser mayor o igual a 1.');
+        }
+
         $totalPages = max(1, (int) ceil($totalRows / $perPage));
         $page = min(max(1, $page), $totalPages);
 

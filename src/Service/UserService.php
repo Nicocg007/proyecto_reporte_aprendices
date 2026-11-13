@@ -8,13 +8,17 @@ final class UserService
 {
     public function normalizeLearnerFilters(array $filters): array
     {
-        $status = (string) ($filters['estado'] ?? '');
-        if ($status !== '' && !in_array($status, ['Activo', 'Inactivo'], true)) {
+        $status = trim((string) ($filters['estado'] ?? ''));
+        if (strcasecmp($status, 'Activo') === 0) {
+            $status = 'Activo';
+        } elseif (strcasecmp($status, 'Inactivo') === 0) {
+            $status = 'Inactivo';
+        } else {
             $status = '';
         }
 
         return [
-            'buscar' => (string) ($filters['buscar'] ?? ''),
+            'buscar' => trim((string) ($filters['buscar'] ?? '')),
             'ficha' => $filters['ficha'] ?? '',
             'estado' => $status,
         ];
