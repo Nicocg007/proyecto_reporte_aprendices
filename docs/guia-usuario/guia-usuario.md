@@ -355,4 +355,14 @@ Para garantizar que ningún tercero modifique la clave sin autorización, el sis
 
 ---
 
+## 6. Pruebas del Sistema
+
+El sistema cuenta con una batería de pruebas automatizadas compuestas por suites **unitarias** y de **integración** ejecutadas bajo PHPUnit 11 y PHP 8.2.
+
+Para consultar el reporte técnico completo, la metodología, la tabla de resultados reales, el detalle por servicio y repositorio, y los hallazgos identificados durante las pruebas, consulte el documento:
+
+👉 **[Informe de Pruebas de Software](../informe-pruebas.md)**
+
+---
+
 *(Fin del módulo Administrador. Continúa con las guías de Instructor y Aprendiz).*

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado Pruebas de Integración - SENA Control</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 32px;
+            line-height: 1.5;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-title h1 { font-size: 24px; font-weight: 700; color: #f87171; }
+        .header-title p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+        .badge {
+            background: #7f1d1d;
+            color: #fca5a5;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-value { font-size: 28px; font-weight: 800; color: #f1f5f9; }
+        .stat-label { font-size: 13px; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+        .stat-card.ok .stat-value { color: var(--success); }
+        .stat-card.err .stat-value { color: var(--danger); }
+        .console-card {
+            background: #090d16;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        .check { color: #10b981; font-weight: bold; }
+        .cross { color: #ef4444; font-weight: bold; }
+        .err-msg { color: #f87171; }
+        .err-trace { color: #64748b; font-size: 11px; }
+        .suite-title { color: #38bdf8; font-weight: bold; margin-top: 14px; margin-bottom: 4px; }
+        .meta-line { color: #64748b; }
+        .summary-err { color: #ef4444; font-weight: bold; margin-top: 16px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-title">
+                <h1>Reporte de Ejecución - Pruebas de Integración</h1>
+                <p>Suite: <strong>integration</strong> | Base de datos: reporte_asistencia_test | Entorno: PHP 8.2.12</p>
+            </div>
+            <div class="badge">✘ ERRORS (30 errores de compatibilidad)</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">32</div>
+                <div class="stat-label">Pruebas Ejecutadas</div>
+            </div>
+            <div class="stat-card ok">
+                <div class="stat-value">4</div>
+                <div class="stat-label">Aserciones Exitosas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Omitidas</div>
+            </div>
+            <div class="stat-card err">
+                <div class="stat-value">30</div>
+                <div class="stat-label">Errores</div>
+            </div>
+        </div>
+
+        <div class="console-card">
+<span class="meta-line">PHPUnit 11.5.58 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.2.12
+Configuration: C:\xampp\htdocs\talleres\proyecto_reporte_aprendices\phpunit.xml
+
+EEEEEEE.EEEEEEEEEEEEEEEEEEEEEEE.                                  32 / 32 (100%)
+
+Time: 00:00.057, Memory: 10.00 MB</span>
+
+<span class="suite-title">Attendance Repository Integration</span>
+ <span class="cross">✘</span> Rfid identifies learner and unknown card returns nothing
+   │ <span class="err-msg">Error: Class "Pdo\Sqlite" not found</span>
+   │ <span class="err-trace">C:\xampp\htdocs\talleres\proyecto_reporte_aprendices\tests\Integration\SqliteIntegrationTestCase.php:28</span>
+ <span class="cross">✘</span> Learner schedule comes from his ficha
+   │ <span class="err-msg">Error: Class "Pdo\Sqlite" not found</span>
+ <span class="cross">✘</span> Save check in persists the attendance for the given date
+   │ <span class="err-msg">Error: Class "Pdo\Sqlite" not found</span>
+ <span class="cross">✘</span> Save check in without date uses today
+   │ <span class="err-msg">Error: Class "Pdo\Sqlite" not found</span>
+ <span class="cross">✘</span> Save check in updates an existing record
+   │ <span class="err-msg">Error: Class "Pdo\Sqlite" not found</span>
+ <span class="cross">✘</span> Save check out registers time and early departure
+   │ <span class="err-msg">Error: Class "Pdo\Sqlite" not found</span>
+ <span class="cross">✘</span> Mark absences only after the ficha exit time
+   │ <span class="err-msg">Error: Class "Pdo\Sqlite" not found</span>
+
+<span class="suite-title">Database Smoke</span>
+ <span class="check">✔</span> Can insert and read record (MySQL reporte_asistencia_test)
+
+<span class="suite-title">Excuse Repository Integration</span>
+ <span class="cross">✘</span> Created excuse starts as pending and learner sees it
+ <span class="cross">✘</span> Learner only sees his own excuses
+ <span class="cross">✘</span> Admin notification counts all pending in system
+ <span class="cross">✘</span> Instructor notification counts only his ficha
+ <span class="cross">✘</span> Only the responsible instructor can review
+ <span class="cross">✘</span> Approving excuse restores the attendance record
+ <span class="cross">✘</span> Excuse can be reviewed only once
+
+<span class="suite-title">Ficha Repository Integration</span>
+ <span class="cross">✘</span> Only active instructors are listed
+ <span class="cross">✘</span> Create ficha persists with its data
+ <span class="cross">✘</span> Listing includes real learner counts per ficha
+ <span class="cross">✘</span> Learner sees his ficha with instructor and counts
+ <span class="cross">✘</span> Instructor only sees his own fichas
+
+<span class="suite-title">Schedule And Dashboard Integration</span>
+ <span class="cross">✘</span> Week rows return only dates in range ordered
+ <span class="cross">✘</span> Range aggregates hours and keeps holidays of any instructor
+ <span class="cross">✘</span> Learner resolves to his ficha and unassigned gets null
+ <span class="cross">✘</span> Admin dashboard counts the whole scenario
+ <span class="cross">✘</span> Learner dashboard summarizes his states
+
+<span class="suite-title">User Repository</span>
+ <span class="check">✔</span> Repository uses injected pdo for login lookup and profile update (SQLite PDO estándar)
+
+<span class="suite-title">User Repository Integration</span>
+ <span class="cross">✘</span> Find for login returns user with its role
+ <span class="cross">✘</span> Find for login returns null for unknown document
+ <span class="cross">✘</span> Find for login survives sql injection attempt
+ <span class="cross">✘</span> Create learner persists user and ficha assignment
+ <span class="cross">✘</span> Update email is reflected in profile
+ <span class="cross">✘</span> Update password changes stored hash
+
+<span class="summary-err">ERRORS!
+Tests: 32, Assertions: 4, Errors: 30.
+Causa detectada: La clase base SqliteIntegrationTestCase invoca "new Pdo\Sqlite()", disponible exclusivamente a partir de PHP 8.4/8.5. En PHP 8.2.12 la clase no existe en el espacio de nombres de PDO.</span>
+        </div>
+    </div>
+</body>
+</html>

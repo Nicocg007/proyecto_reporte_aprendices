@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado Pruebas Unitarias - SENA Control</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --teal: #0d9488;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 32px;
+            line-height: 1.5;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-title h1 { font-size: 24px; font-weight: 700; color: #38bdf8; }
+        .header-title p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+        .badge {
+            background: #065f46;
+            color: #6ee7b7;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-value { font-size: 28px; font-weight: 800; color: #f1f5f9; }
+        .stat-label { font-size: 13px; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+        .stat-card.ok .stat-value { color: var(--success); }
+        .stat-card.warn .stat-value { color: var(--warning); }
+        .console-card {
+            background: #090d16;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        .check { color: #10b981; font-weight: bold; }
+        .suite-title { color: #38bdf8; font-weight: bold; margin-top: 14px; margin-bottom: 4px; }
+        .meta-line { color: #64748b; }
+        .ok-line { color: #10b981; font-weight: bold; margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-title">
+                <h1>Reporte de Ejecución - Pruebas Unitarias</h1>
+                <p>Suite: <strong>unit</strong> | Framework: PHPUnit 11.5.58 | Entorno: PHP 8.2.12</p>
+            </div>
+            <div class="badge">✔ PASSED (100%)</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card ok">
+                <div class="stat-value">109</div>
+                <div class="stat-label">Pruebas Ejecutadas</div>
+            </div>
+            <div class="stat-card ok">
+                <div class="stat-value">128</div>
+                <div class="stat-label">Aserciones</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Omitidas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Fallidas</div>
+            </div>
+        </div>
+
+        <div class="console-card">
+<span class="meta-line">PHPUnit 11.5.58 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.2.12
+Configuration: C:\xampp\htdocs\talleres\proyecto_reporte_aprendices\phpunit.xml
+
+...............................................................  63 / 109 ( 57%)
+..............................................                  109 / 109 (100%)
+
+Time: 00:00.574, Memory: 10.00 MB</span>
+
+<span class="suite-title">Attendance Service</span>
+ <span class="check">✔</span> Allowed statuses match the attendance form options
+ <span class="check">✔</span> Calculate check in with data set "exactly on schedule"
+ <span class="check">✔</span> Calculate check in with data set "before schedule"
+ <span class="check">✔</span> Calculate check in with data set "late by less than thirty seconds rounds up to one minute"
+ <span class="check">✔</span> Calculate check in with data set "one second late is one minute"
+ <span class="check">✔</span> Calculate check in with data set "half-minute rounds up"
+ <span class="check">✔</span> Calculate check in with data set "rounds a minute and a half to two"
+ <span class="check">✔</span> Calculate check in with data set "missing schedule does not mark a delay"
+ <span class="check">✔</span> Calculate check in with data set "empty time with no schedule remains normal"
+ <span class="check">✔</span> Calculate manual attendance with data set "normal attendance on time"
+ <span class="check">✔</span> Calculate manual attendance with data set "early check-in has no negative delay"
+ <span class="check">✔</span> Calculate manual attendance with data set "late attendance calculates whole minutes"
+ <span class="check">✔</span> Calculate manual attendance with data set "early departure sets its flag"
+ <span class="check">✔</span> Calculate manual attendance with data set "absence overrides provided check-in"
+ <span class="check">✔</span> Calculate manual attendance with data set "unknown status becomes absence"
+ <span class="check">✔</span> Calculate manual attendance with data set "empty check-in has no delay"
+ <span class="check">✔</span> Calculate manual attendance with data set "empty string check-in has no delay"
+ <span class="check">✔</span> Calculate manual attendance with data set "missing schedule has no delay"
+ <span class="check">✔</span> Normalize report filters with data set "missing inputs become empty filters"
+ <span class="check">✔</span> Normalize report filters with data set "trims date and accepts known state"
+ <span class="check">✔</span> Normalize report filters with data set "rejects date with wrong format and unknown state"
+ <span class="check">✔</span> Count by status with data set "empty rows initialize all statuses"
+ <span class="check">✔</span> Count by status with data set "counts known states and ignores unknown state"
+ <span class="check">✔</span> Normalize pagination with data set "middle page"
+ <span class="check">✔</span> Normalize pagination with data set "page below first is clamped"
+ <span class="check">✔</span> Normalize pagination with data set "page above last is clamped"
+ <span class="check">✔</span> Normalize pagination with data set "no rows still has one page"
+ <span class="check">✔</span> Normalize pagination with data set "one row per page"
+ <span class="check">✔</span> Normalize pagination rejects page size below one with data set "zero page size"
+ <span class="check">✔</span> Normalize pagination rejects page size below one with data set "negative page size"
+ <span class="check">✔</span> Rfid feedback with data set "entry success uses default values"
+ <span class="check">✔</span> Rfid feedback with data set "entry success keeps supplied values"
+ <span class="check">✔</span> Rfid feedback with data set "exit success uses default values"
+ <span class="check">✔</span> Rfid feedback with data set "exit success keeps supplied values"
+ <span class="check">✔</span> Rfid feedback with data set "unknown feedback code yields no message"
+ <span class="check">✔</span> Rfid feedback with data set "empty query yields no message"
+ <span class="check">✔</span> Rfid feedback with data set "entry and error feedback can coexist"
+ <span class="check">✔</span> Rfid feedback error messages with data set "unknown card"
+ <span class="check">✔</span> Rfid feedback error messages with data set "inactive learner"
+ <span class="check">✔</span> Rfid feedback error messages with data set "already completed attendance"
+
+<span class="suite-title">Auth Service</span>
+ <span class="check">✔</span> Dashboard for role with data set "administrator dashboard"
+ <span class="check">✔</span> Dashboard for role with data set "instructor dashboard"
+ <span class="check">✔</span> Dashboard for role with data set "learner dashboard"
+ <span class="check">✔</span> Dashboard for role with data set "empty role redirects to login"
+ <span class="check">✔</span> Dashboard for role with data set "unknown role redirects to login"
+ <span class="check">✔</span> User summary contains complete session data
+ <span class="check">✔</span> User summary defaults missing session fields
+
+<span class="suite-title">Excuse Service</span>
+ <span class="check">✔</span> Submission validation with data set "date and reason provided"
+ <span class="check">✔</span> Submission validation with data set "missing date is rejected"
+ <span class="check">✔</span> Attachment validation with data set "case-insensitive pdf at the size limit is accepted"
+ <span class="check">✔</span> Attachment validation with data set "unsupported extension is rejected"
+ <span class="check">✔</span> Attachment validation with data set "size above limit is rejected"
+ <span class="check">✔</span> Attachment validation with data set "mime must match the extension"
+ <span class="check">✔</span> Notifications are scoped by role with data set "administrator sees pending review count"
+ <span class="check">✔</span> Notifications are scoped by role with data set "instructor sees pending review count"
+ <span class="check">✔</span> Notifications are scoped by role with data set "learner sees each nonzero status count"
+ <span class="check">✔</span> Notifications omit zero counts with data set "administrator omits zero pending count"
+ <span class="check">✔</span> Notifications omit zero counts with data set "instructor omits zero pending count"
+ <span class="check">✔</span> Notifications omit zero counts with data set "learner omits zero status counts"
+
+<span class="suite-title">Ficha Service</span>
+ <span class="check">✔</span> Creation accepts all required fields
+ <span class="check">✔</span> Creation rejects each missing field with data set "missing ficha code"
+ <span class="check">✔</span> Creation rejects each missing field with data set "missing program name"
+ <span class="check">✔</span> Creation rejects each missing field with data set "missing entry time"
+ <span class="check">✔</span> Creation rejects each missing field with data set "missing exit time"
+ <span class="check">✔</span> Creation rejects each missing field with data set "missing instructor"
+ <span class="check">✔</span> Creation rejects each empty field with data set "empty ficha code"
+ <span class="check">✔</span> Creation rejects each empty field with data set "empty program name"
+ <span class="check">✔</span> Creation rejects each empty field with data set "empty entry time"
+ <span class="check">✔</span> Creation rejects each empty field with data set "empty exit time"
+ <span class="check">✔</span> Creation rejects each empty field with data set "empty instructor"
+ <span class="check">✔</span> Creation rejects fields containing only spaces
+
+<span class="suite-title">Password Change Service</span>
+ <span class="check">✔</span> Password pair validation with data set "matching password at minimum length is accepted"
+ <span class="check">✔</span> Password pair validation with data set "different confirmation is rejected"
+ <span class="check">✔</span> Password pair validation with data set "matching password below minimum length is rejected"
+ <span class="check">✔</span> Code validation and remaining time with data set "matching code at expiration boundary remains valid"
+ <span class="check">✔</span> Code validation and remaining time with data set "different code is invalid while unexpired"
+ <span class="check">✔</span> Code validation and remaining time with data set "matching code after expiration is rejected"
+
+<span class="suite-title">Password Service</span>
+ <span class="check">✔</span> Hash is different from the original password
+ <span class="check">✔</span> Hash verifies the original password
+ <span class="check">✔</span> Hash rejects an incorrect password
+ <span class="check">✔</span> Empty password can be hashed and verified
+ <span class="check">✔</span> Same password gets different salts and both hashes verify
+
+<span class="suite-title">Report Service</span>
+ <span class="check">✔</span> Csv headers
+ <span class="check">✔</span> Csv row
+ <span class="check">✔</span> Csv row preserves empty values
+ <span class="check">✔</span> Csv row with missing fields
+ <span class="check">✔</span> Csv filename
+
+<span class="suite-title">Schedule Service</span>
+ <span class="check">✔</span> Build grid with data set "weekday schedule and holiday are separated"
+ <span class="check">✔</span> Build grid with data set "weekend rows and zero-length time range are omitted"
+ <span class="check">✔</span> Build week
+ <span class="check">✔</span> Color for instructor
+
+<span class="suite-title">Security Service</span>
+ <span class="check">✔</span> Csrf token validation with data set "identical nonempty tokens are valid"
+ <span class="check">✔</span> Csrf token validation with data set "empty expected token is invalid"
+ <span class="check">✔</span> Csrf token validation with data set "different tokens are invalid"
+ <span class="check">✔</span> Rate limit and escaping use explicit values
+
+<span class="suite-title">User Service</span>
+ <span class="check">✔</span> Learner filters with data set "leading spaces in search are trimmed"
+ <span class="check">✔</span> Learner filters with data set "trailing spaces in search are trimmed"
+ <span class="check">✔</span> Learner filters with data set "whitespace-only search becomes empty"
+ <span class="check">✔</span> Learner filters with data set "empty filter values remain empty"
+ <span class="check">✔</span> Learner filters with data set "lowercase active status is normalized"
+ <span class="check">✔</span> Learner filters with data set "uppercase active status is normalized"
+ <span class="check">✔</span> Status with surrounding spaces is normalized
+ <span class="check">✔</span> Learner filters with data set "lowercase inactive status is normalized"
+ <span class="check">✔</span> Learner filters with data set "invalid status is discarded"
+ <span class="check">✔</span> Learner filters with data set "missing filter keys default to empty values"
+ <span class="check">✔</span> Learner name validation with data set "four characters is too short"
+ <span class="check">✔</span> Learner name validation with data set "five characters is accepted"
+ <span class="check">✔</span> Learner name validation with data set "surrounding spaces do not affect length"
+ <span class="check">✔</span> Learner name validation with data set "empty name is too short"
+
+<span class="ok-line">OK (109 tests, 128 assertions)</span>
+        </div>
+    </div>
+</body>
+</html>
